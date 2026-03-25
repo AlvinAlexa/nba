@@ -1,11 +1,23 @@
-<!DOCTYPE html>
+I have updated your third dashboard with the same Google OAuth login method used in v5.5. The changes are:
 
+· Fixed client ID – no more prompt; uses the same public client ID as v5.5.
+· Sign‑in button now calls handleAuth() (same as v2).
+· Token storage and restoration – the access token is saved in localStorage and restored on page load.
+· Profile fetching – user name, email, and avatar are displayed after sign‑in.
+· Top‑bar pill shows signed‑in status and name.
+
+All existing features (league scanning, content generation, posting) remain untouched.
+
+Here is the complete updated HTML file. You can copy and paste it directly into your project.
+
+```html
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Sports 803 · AI Auto-Post Dashboard (Free)</title>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://accounts.google.com/gsi/client" async></script>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -30,201 +42,201 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-background: var(–bg);
-color: var(–text);
-font-family: ‘Syne’, sans-serif;
-font-size: 14px;
-min-height: 100vh;
-overflow-x: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  min-height: 100vh;
+  overflow-x: hidden;
 }
 
 /* ── NOISE TEXTURE ── */
 body::before {
-content: ‘’;
-position: fixed;
-inset: 0;
-background-image: url(“data:image/svg+xml,%3Csvg viewBox=‘0 0 256 256’ xmlns=‘http://www.w3.org/2000/svg’%3E%3Cfilter id=‘noise’%3E%3CfeTurbulence type=‘fractalNoise’ baseFrequency=‘0.9’ numOctaves=‘4’ stitchTiles=‘stitch’/%3E%3C/filter%3E%3Crect width=‘100%25’ height=‘100%25’ filter=‘url(%23noise)’ opacity=‘0.03’/%3E%3C/svg%3E”);
-pointer-events: none;
-z-index: 0;
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
 }
 
 /* ── HEADER ── */
 .topbar {
-background: var(–s1);
-border-bottom: 1px solid var(–border);
-padding: 0 24px;
-position: sticky;
-top: 0;
-z-index: 200;
-display: flex;
-align-items: center;
-height: 54px;
-gap: 16px;
+  background: var(--s1);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  height: 54px;
+  gap: 16px;
 }
 
 .topbar-logo {
-display: flex;
-align-items: center;
-gap: 10px;
-font-size: 15px;
-font-weight: 800;
-letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 .topbar-logo .badge {
-background: var(–accent);
-color: #070809;
-font-size: 10px;
-font-weight: 800;
-padding: 3px 7px;
-border-radius: 4px;
-letter-spacing: 0.06em;
+  background: var(--accent);
+  color: #070809;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.06em;
 }
 
 .topbar-sub {
-font-size: 11px;
-color: var(–muted);
-letter-spacing: 0.08em;
-text-transform: uppercase;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .topbar-right {
-margin-left: auto;
-display: flex;
-align-items: center;
-gap: 10px;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .pill {
-display: inline-flex;
-align-items: center;
-gap: 5px;
-font-size: 10px;
-font-weight: 600;
-letter-spacing: 0.06em;
-text-transform: uppercase;
-padding: 4px 10px;
-border-radius: 20px;
-border: 1px solid var(–border);
-color: var(–muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  color: var(--muted);
 }
 
-.pill.ok  { border-color: rgba(46,213,115,.4); color: var(–green); background: rgba(46,213,115,.07); }
-.pill.err { border-color: rgba(255,71,87,.4);  color: var(–red);   background: rgba(255,71,87,.07); }
-.pill.dot::before { content: ‘’; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.pill.ok  { border-color: rgba(46,213,115,.4); color: var(--green); background: rgba(46,213,115,.07); }
+.pill.err { border-color: rgba(255,71,87,.4);  color: var(--red);   background: rgba(255,71,87,.07); }
+.pill.dot::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 
 /* ── LAYOUT ── */
 .layout {
-display: grid;
-grid-template-columns: 300px 1fr;
-min-height: calc(100vh - 54px);
-position: relative;
-z-index: 1;
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  min-height: calc(100vh - 54px);
+  position: relative;
+  z-index: 1;
 }
 
 /* ── SIDEBAR ── */
 .sidebar {
-background: var(–s1);
-border-right: 1px solid var(–border);
-padding: 24px 20px;
-display: flex;
-flex-direction: column;
-gap: 24px;
-overflow-y: auto;
-max-height: calc(100vh - 54px);
-position: sticky;
-top: 54px;
+  background: var(--s1);
+  border-right: 1px solid var(--border);
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  overflow-y: auto;
+  max-height: calc(100vh - 54px);
+  position: sticky;
+  top: 54px;
 }
 
 .sidebar-section { display: flex; flex-direction: column; gap: 10px; }
 
 .section-label {
-font-size: 9px;
-font-weight: 700;
-letter-spacing: 0.14em;
-text-transform: uppercase;
-color: var(–muted);
-padding-bottom: 6px;
-border-bottom: 1px solid var(–border);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
 }
 
 .input-group { display: flex; flex-direction: column; gap: 5px; }
 
 .input-label {
-font-size: 11px;
-color: var(–muted2);
-font-weight: 500;
-display: flex;
-align-items: center;
-gap: 6px;
+  font-size: 11px;
+  color: var(--muted2);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .input-label .tip {
-font-size: 9px;
-background: var(–s3);
-padding: 1px 5px;
-border-radius: 3px;
-color: var(–muted);
-font-family: ‘JetBrains Mono’, monospace;
+  font-size: 9px;
+  background: var(--s3);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
 }
 
-input[type=“text”], input[type=“password”], select, textarea {
-background: var(–s2);
-border: 1px solid var(–border);
-color: var(–text);
-font-family: ‘JetBrains Mono’, monospace;
-font-size: 11px;
-padding: 9px 11px;
-border-radius: var(–r);
-width: 100%;
-outline: none;
-transition: border-color .15s;
+input[type="text"], input[type="password"], select, textarea {
+  background: var(--s2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 9px 11px;
+  border-radius: var(--r);
+  width: 100%;
+  outline: none;
+  transition: border-color .15s;
 }
 
-input[type=“text”]:focus,
-input[type=“password”]:focus,
+input[type="text"]:focus,
+input[type="password"]:focus,
 select:focus,
 textarea:focus {
-border-color: var(–accent2);
+  border-color: var(--accent2);
 }
 
 select option { background: #141720; }
 
 .btn {
-display: inline-flex;
-align-items: center;
-justify-content: center;
-gap: 8px;
-font-family: ‘Syne’, sans-serif;
-font-weight: 700;
-font-size: 11px;
-letter-spacing: 0.08em;
-text-transform: uppercase;
-padding: 10px 18px;
-border-radius: var(–r);
-border: none;
-cursor: pointer;
-transition: all .15s;
-white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 10px 18px;
+  border-radius: var(--r);
+  border: none;
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
 }
 
 .btn-primary {
-background: var(–accent);
-color: #070809;
+  background: var(--accent);
+  color: #070809;
 }
 .btn-primary:hover { background: #f5ff80; transform: translateY(-1px); }
 
 .btn-secondary {
-background: var(–s3);
-color: var(–text);
-border: 1px solid var(–border2);
+  background: var(--s3);
+  color: var(--text);
+  border: 1px solid var(--border2);
 }
-.btn-secondary:hover { border-color: var(–accent2); color: var(–accent2); }
+.btn-secondary:hover { border-color: var(--accent2); color: var(--accent2); }
 
 .btn-danger {
-background: rgba(255,71,87,.12);
-color: var(–red);
-border: 1px solid rgba(255,71,87,.3);
+  background: rgba(255,71,87,.12);
+  color: var(--red);
+  border: 1px solid rgba(255,71,87,.3);
 }
 .btn-danger:hover { background: rgba(255,71,87,.2); }
 
@@ -233,12 +245,12 @@ border: 1px solid rgba(255,71,87,.3);
 .btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
 
 .btn .spin {
-width: 12px; height: 12px;
-border: 2px solid currentColor;
-border-top-color: transparent;
-border-radius: 50%;
-animation: spin .6s linear infinite;
-display: none;
+  width: 12px; height: 12px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin .6s linear infinite;
+  display: none;
 }
 
 .btn.loading .spin { display: block; }
@@ -247,373 +259,430 @@ display: none;
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .leagues-grid {
-display: grid;
-grid-template-columns: 1fr 1fr;
-gap: 6px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
 }
 
 .league-toggle {
-display: flex;
-align-items: center;
-gap: 7px;
-background: var(–s2);
-border: 1px solid var(–border);
-border-radius: var(–r);
-padding: 7px 10px;
-cursor: pointer;
-transition: all .15s;
-font-size: 11px;
-font-weight: 500;
-color: var(–muted2);
-user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 7px 10px;
+  cursor: pointer;
+  transition: all .15s;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted2);
+  user-select: none;
 }
 .league-toggle.active {
-border-color: var(–accent);
-background: rgba(232,255,71,.08);
-color: var(–text);
+  border-color: var(--accent);
+  background: rgba(232,255,71,.08);
+  color: var(--text);
 }
 .league-toggle .lcheck {
-width: 14px; height: 14px;
-border: 1.5px solid var(–border2);
-border-radius: 3px;
-flex-shrink: 0;
-display: flex; align-items: center; justify-content: center;
-font-size: 9px;
-transition: all .15s;
+  width: 14px; height: 14px;
+  border: 1.5px solid var(--border2);
+  border-radius: 3px;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px;
+  transition: all .15s;
 }
 .league-toggle.active .lcheck {
-background: var(–accent);
-border-color: var(–accent);
-color: #070809;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #070809;
 }
 
 /* ── MAIN ── */
 .main { padding: 28px 28px 60px; overflow-y: auto; }
 
 .main-header {
-display: flex;
-align-items: flex-start;
-justify-content: space-between;
-gap: 16px;
-margin-bottom: 28px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 28px;
 }
 
 .main-title {
-font-size: 22px;
-font-weight: 800;
-letter-spacing: -0.03em;
-line-height: 1.1;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
 }
-.main-title span { color: var(–accent); }
+.main-title span { color: var(--accent); }
 
 .main-subtitle {
-font-size: 12px;
-color: var(–muted);
-margin-top: 4px;
-font-weight: 400;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
+  font-weight: 400;
 }
 
 .scan-actions { display: flex; gap: 8px; }
 
 /* ── GAME CARD ── */
 .games-grid {
-display: grid;
-grid-template-columns: 1fr;
-gap: 12px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
 }
 
 .game-card {
-background: var(–s1);
-border: 1px solid var(–border);
-border-radius: var(–r2);
-overflow: hidden;
-transition: border-color .15s;
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  overflow: hidden;
+  transition: border-color .15s;
 }
 
-.game-card:hover { border-color: var(–border2); }
+.game-card:hover { border-color: var(--border2); }
 
 .game-card-head {
-display: flex;
-align-items: center;
-gap: 12px;
-padding: 14px 16px;
-border-bottom: 1px solid var(–border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
 }
 
 .game-teams {
-flex: 1;
-display: flex;
-align-items: center;
-gap: 10px;
-min-width: 0;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
 }
 
 .team-block {
-display: flex;
-align-items: center;
-gap: 8px;
-flex: 1;
-min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
 }
 
 .team-logo {
-width: 32px; height: 32px;
-object-fit: contain;
-flex-shrink: 0;
-filter: drop-shadow(0 1px 4px rgba(0,0,0,.5));
+  width: 32px; height: 32px;
+  object-fit: contain;
+  flex-shrink: 0;
+  filter: drop-shadow(0 1px 4px rgba(0,0,0,.5));
 }
 
 .team-logo-placeholder {
-width: 32px; height: 32px;
-background: var(–s3);
-border: 1px solid var(–border);
-border-radius: 50%;
-display: flex; align-items: center; justify-content: center;
-font-size: 14px;
-flex-shrink: 0;
+  width: 32px; height: 32px;
+  background: var(--s3);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
 }
 
 .team-name {
-font-size: 13px;
-font-weight: 700;
-white-space: nowrap;
-overflow: hidden;
-text-overflow: ellipsis;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .vs-block {
-display: flex;
-flex-direction: column;
-align-items: center;
-gap: 3px;
-flex-shrink: 0;
-width: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  width: 56px;
 }
 
 .vs-score {
-font-family: ‘JetBrains Mono’, monospace;
-font-size: 18px;
-font-weight: 500;
-color: var(–text);
-letter-spacing: 2px;
-line-height: 1;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text);
+  letter-spacing: 2px;
+  line-height: 1;
 }
 
 .vs-label {
-font-size: 9px;
-font-weight: 600;
-letter-spacing: 0.1em;
-text-transform: uppercase;
-color: var(–muted);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
-.vs-label.live-lbl { color: var(–green); animation: pulse-live 1.5s infinite; }
-.vs-label.ft-lbl   { color: var(–muted); }
-.vs-label.pre-lbl  { color: var(–accent); }
+.vs-label.live-lbl { color: var(--green); animation: pulse-live 1.5s infinite; }
+.vs-label.ft-lbl   { color: var(--muted); }
+.vs-label.pre-lbl  { color: var(--accent); }
 
 @keyframes pulse-live { 0%,100%{opacity:1} 50%{opacity:.5} }
 
 .game-meta-right {
-display: flex;
-flex-direction: column;
-align-items: flex-end;
-gap: 5px;
-flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+  flex-shrink: 0;
 }
 
 .league-tag {
-font-size: 9px;
-font-weight: 700;
-letter-spacing: 0.08em;
-text-transform: uppercase;
-padding: 2px 8px;
-border-radius: 3px;
-background: rgba(232,255,71,.1);
-color: var(–accent);
-border: 1px solid rgba(232,255,71,.2);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background: rgba(232,255,71,.1);
+  color: var(--accent);
+  border: 1px solid rgba(232,255,71,.2);
 }
 
 .game-time {
-font-family: ‘JetBrains Mono’, monospace;
-font-size: 10px;
-color: var(–muted);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
 }
 
 /* ── CONTENT PANEL ── */
 .game-content-panel {
-padding: 14px 16px;
-display: flex;
-flex-direction: column;
-gap: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .content-tabs {
-display: flex;
-gap: 4px;
-border-bottom: 1px solid var(–border);
-padding-bottom: 10px;
-margin-bottom: 4px;
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 10px;
+  margin-bottom: 4px;
 }
 
 .ctab {
-font-size: 10px;
-font-weight: 700;
-letter-spacing: 0.06em;
-text-transform: uppercase;
-padding: 4px 12px;
-border-radius: 4px;
-cursor: pointer;
-color: var(–muted);
-border: 1px solid transparent;
-background: none;
-font-family: ‘Syne’, sans-serif;
-transition: all .12s;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--muted);
+  border: 1px solid transparent;
+  background: none;
+  font-family: 'Syne', sans-serif;
+  transition: all .12s;
 }
-.ctab.active { background: var(–s3); border-color: var(–border2); color: var(–text); }
-.ctab:hover:not(.active) { color: var(–muted2); }
+.ctab.active { background: var(--s3); border-color: var(--border2); color: var(--text); }
+.ctab:hover:not(.active) { color: var(--muted2); }
 
 .content-area {
-min-height: 100px;
-position: relative;
+  min-height: 100px;
+  position: relative;
 }
 
 .content-text {
-font-size: 12px;
-color: var(–muted2);
-line-height: 1.7;
-font-family: ‘JetBrains Mono’, monospace;
-font-weight: 300;
-white-space: pre-wrap;
-word-break: break-word;
+  font-size: 12px;
+  color: var(--muted2);
+  line-height: 1.7;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 300;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .content-empty {
-display: flex;
-align-items: center;
-justify-content: center;
-height: 80px;
-color: var(–muted);
-font-size: 11px;
-font-style: italic;
-letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 80px;
+  color: var(--muted);
+  font-size: 11px;
+  font-style: italic;
+  letter-spacing: 0.04em;
 }
 
 .content-actions {
-display: flex;
-gap: 8px;
-flex-wrap: wrap;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 /* ── STATUS BADGE ── */
 .post-status {
-display: inline-flex;
-align-items: center;
-gap: 5px;
-font-size: 9px;
-font-weight: 700;
-letter-spacing: 0.08em;
-text-transform: uppercase;
-padding: 3px 9px;
-border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 20px;
 }
-.post-status.draft    { background: rgba(255,165,2,.1); color: var(–orange); border: 1px solid rgba(255,165,2,.3); }
-.post-status.posted   { background: rgba(46,213,115,.1); color: var(–green); border: 1px solid rgba(46,213,115,.3); }
-.post-status.updated  { background: rgba(0,212,255,.1); color: var(–accent2); border: 1px solid rgba(0,212,255,.3); }
-.post-status.idle     { background: var(–s3); color: var(–muted); border: 1px solid var(–border); }
+.post-status.draft    { background: rgba(255,165,2,.1); color: var(--orange); border: 1px solid rgba(255,165,2,.3); }
+.post-status.posted   { background: rgba(46,213,115,.1); color: var(--green); border: 1px solid rgba(46,213,115,.3); }
+.post-status.updated  { background: rgba(0,212,255,.1); color: var(--accent2); border: 1px solid rgba(0,212,255,.3); }
+.post-status.idle     { background: var(--s3); color: var(--muted); border: 1px solid var(--border); }
 
 /* ── LOG ── */
 .log-panel {
-background: var(–s2);
-border: 1px solid var(–border);
-border-radius: var(–r);
-padding: 12px 14px;
-max-height: 160px;
-overflow-y: auto;
-font-family: ‘JetBrains Mono’, monospace;
-font-size: 10px;
-line-height: 1.8;
-color: var(–muted);
-scrollbar-width: thin;
-scrollbar-color: var(–border2) transparent;
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 12px 14px;
+  max-height: 160px;
+  overflow-y: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  line-height: 1.8;
+  color: var(--muted);
+  scrollbar-width: thin;
+  scrollbar-color: var(--border2) transparent;
 }
 
 .log-line { display: flex; gap: 10px; }
-.log-line .ts { color: var(–muted); flex-shrink: 0; }
-.log-line.info .msg { color: var(–muted2); }
-.log-line.ok   .msg { color: var(–green); }
-.log-line.err  .msg { color: var(–red); }
-.log-line.ai   .msg { color: var(–accent2); }
+.log-line .ts { color: var(--muted); flex-shrink: 0; }
+.log-line.info .msg { color: var(--muted2); }
+.log-line.ok   .msg { color: var(--green); }
+.log-line.err  .msg { color: var(--red); }
+.log-line.ai   .msg { color: var(--accent2); }
 
 /* ── EMPTY STATE ── */
 .empty-state {
-display: flex;
-flex-direction: column;
-align-items: center;
-justify-content: center;
-padding: 80px 20px;
-color: var(–muted);
-text-align: center;
-gap: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  color: var(--muted);
+  text-align: center;
+  gap: 12px;
 }
 .empty-state .icon { font-size: 48px; opacity: .4; }
-.empty-state h3 { font-size: 16px; font-weight: 700; color: var(–muted2); }
+.empty-state h3 { font-size: 16px; font-weight: 700; color: var(--muted2); }
 .empty-state p { font-size: 12px; max-width: 340px; line-height: 1.6; }
 
 /* ── SCROLLBAR ── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(–border2); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
 
 /* ── RESPONSIVE ── */
 @media (max-width: 900px) {
-.layout { grid-template-columns: 1fr; }
-.sidebar { position: static; max-height: none; border-right: none; border-bottom: 1px solid var(–border); }
+  .layout { grid-template-columns: 1fr; }
+  .sidebar { position: static; max-height: none; border-right: none; border-bottom: 1px solid var(--border); }
 }
 
 /* ── TOAST ── */
 .toast {
-position: fixed;
-bottom: 24px; right: 24px;
-background: var(–s3);
-border: 1px solid var(–border2);
-border-radius: var(–r2);
-padding: 12px 18px;
-font-size: 12px;
-font-weight: 600;
-z-index: 999;
-transform: translateY(80px);
-opacity: 0;
-transition: all .3s cubic-bezier(.34,1.56,.64,1);
-max-width: 320px;
+  position: fixed;
+  bottom: 24px; right: 24px;
+  background: var(--s3);
+  border: 1px solid var(--border2);
+  border-radius: var(--r2);
+  padding: 12px 18px;
+  font-size: 12px;
+  font-weight: 600;
+  z-index: 999;
+  transform: translateY(80px);
+  opacity: 0;
+  transition: all .3s cubic-bezier(.34,1.56,.64,1);
+  max-width: 320px;
 }
 .toast.show { transform: translateY(0); opacity: 1; }
-.toast.ok  { border-color: rgba(46,213,115,.5); color: var(–green); }
-.toast.err { border-color: rgba(255,71,87,.5); color: var(–red); }
+.toast.ok  { border-color: rgba(46,213,115,.5); color: var(--green); }
+.toast.err { border-color: rgba(255,71,87,.5); color: var(--red); }
 
 /* ── DIVIDER ── */
-.divider { height: 1px; background: var(–border); margin: 4px 0; }
+.divider { height: 1px; background: var(--border); margin: 4px 0; }
 
 .settings-note {
-font-size: 10px;
-color: var(–muted);
-line-height: 1.6;
-background: var(–s2);
-border: 1px solid var(–border);
-border-radius: var(–r);
-padding: 10px 12px;
+  font-size: 10px;
+  color: var(--muted);
+  line-height: 1.6;
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 10px 12px;
 }
-.settings-note a { color: var(–accent2); }
+.settings-note a { color: var(--accent2); }
 
 .highlight-badge {
-font-size: 9px;
-font-weight: 700;
-letter-spacing: 0.06em;
-text-transform: uppercase;
-padding: 2px 6px;
-border-radius: 3px;
-background: rgba(0,212,255,.1);
-color: var(–accent2);
-border: 1px solid rgba(0,212,255,.2);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: rgba(0,212,255,.1);
+  color: var(--accent2);
+  border: 1px solid rgba(0,212,255,.2);
 }
+
+/* Signed in block */
+.signed-in-block {
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+}
+.signed-in-block.visible { display: flex; }
+
+.user-info-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 10px 12px;
+}
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid var(--border2);
+}
+.user-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.user-email {
+  font-size: 10px;
+  color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.signout-btn {
+  margin-left: auto;
+  flex-shrink: 0;
+  background: rgba(255,71,87,.1);
+  color: var(--red);
+  border: 1px solid rgba(255,71,87,.25);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s;
+}
+.signout-btn:hover { background: rgba(255,71,87,.2); }
 </style>
 
 </head>
@@ -628,8 +697,8 @@ border: 1px solid rgba(0,212,255,.2);
   </div>
   <span class="topbar-sub">AI Auto-Post Dashboard</span>
   <div class="topbar-right">
-    <span class="pill dot ok" id="api-status-pill">&#x2713; Auto-Content On</span>
-    <span class="pill dot" id="blogger-status-pill">&#x2717; Not signed in</span>
+    <span class="pill dot ok" id="api-status-pill">✓ Auto-Content On</span>
+    <span class="pill dot" id="blogger-status-pill">⚪ Not signed in</span>
   </div>
 </div>
 
@@ -639,102 +708,100 @@ border: 1px solid rgba(0,212,255,.2);
 
   <aside class="sidebar">
 
-```
-<!-- API KEYS -->
-<div class="sidebar-section">
-  <div class="section-label">&#x1F510; Blogger Connection</div>
+    <!-- API KEYS -->
+    <div class="sidebar-section">
+      <div class="section-label">🔑 Blogger Connection</div>
 
-  <!-- NOT signed in -->
-  <div id="signin-block">
-    <button class="google-signin-btn" onclick="signInWithGoogle()">
-      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
-      Sign in with Google
-    </button>
-    <div class="settings-note" style="margin-top:8px;">
-      Sign in with the Google account that <strong>owns</strong> your Sports 803 Blogger blog.
-      No passwords stored &#x2014; uses secure Google OAuth.
-    </div>
-  </div>
-
-  <!-- Signed in -->
-  <div class="signed-in-block" id="signedin-block">
-    <div class="user-info-row">
-      <img class="user-avatar" id="user-avatar" src="" alt="">
-      <div style="flex:1;min-width:0;">
-        <div class="user-name" id="user-name"></div>
-        <div class="user-email" id="user-email"></div>
+      <!-- NOT signed in -->
+      <div id="signin-block">
+        <button class="btn btn-primary btn-full" id="auth-btn" onclick="handleAuth()">
+          <span class="btn-text">🔑 Sign in with Google</span>
+          <div class="spin"></div>
+        </button>
+        <div class="settings-note" style="margin-top:8px;">
+          Sign in with the Google account that <strong>owns</strong> your Sports 803 Blogger blog.
+          No passwords stored — uses secure Google OAuth.
+        </div>
       </div>
-      <button class="signout-btn" onclick="signOut()">Sign out</button>
+
+      <!-- Signed in -->
+      <div class="signed-in-block" id="signedin-block">
+        <div class="user-info-row">
+          <img id="user-avatar" class="user-avatar" alt="" style="display:none;">
+          <div style="flex:1;min-width:0;">
+            <div id="user-name" class="user-name"></div>
+            <div id="user-email" class="user-email"></div>
+          </div>
+          <button class="signout-btn" onclick="signOut()">Sign out</button>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Blog ID</label>
+          <input type="text" id="blog-id" placeholder="3020785713747810415"/>
+        </div>
+        <button class="btn btn-secondary btn-full" onclick="saveConfig()">
+          <span class="btn-text">💾 Save Blog ID</span>
+        </button>
+        <div class="settings-note">
+          Your Blog ID is the number in your Blogger dashboard URL.<br>
+          e.g. <strong>3020785713747810415</strong>
+        </div>
+      </div>
     </div>
-    <div class="input-group">
-      <label class="input-label">Blog ID</label>
-      <input type="text" id="blog-id" placeholder="3020785713747810415"/>
+
+    <div class="divider"></div>
+
+    <!-- LEAGUES -->
+    <div class="sidebar-section">
+      <div class="section-label">⚽ Leagues to Monitor</div>
+      <div class="leagues-grid" id="leagues-grid">
+        <!-- populated by JS -->
+      </div>
     </div>
-    <button class="btn btn-secondary btn-full" onclick="saveConfig()">
-      <span class="btn-text">&#x1F4BE; Save Blog ID</span>
-    </button>
-    <div class="settings-note">
-      Your Blog ID is the number in your Blogger dashboard URL.<br>
-      e.g. <strong>3020785713747810415</strong>
+
+    <div class="divider"></div>
+
+    <!-- POST SETTINGS -->
+    <div class="sidebar-section">
+      <div class="section-label">⚙️ Post Settings</div>
+      <div class="input-group">
+        <label class="input-label">Post Language</label>
+        <select id="post-lang">
+          <option value="English">English</option>
+          <option value="Spanish">Spanish</option>
+          <option value="French">French</option>
+          <option value="Arabic">Arabic</option>
+          <option value="Portuguese">Portuguese</option>
+          <option value="German">German</option>
+          <option value="Italian">Italian</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Writing Style</label>
+        <select id="post-style">
+          <option value="energetic and engaging">⚡ Energetic & Engaging</option>
+          <option value="professional journalist">📰 Professional Journalist</option>
+          <option value="casual and fun">😄 Casual & Fun</option>
+          <option value="analytical and tactical">🎯 Analytical & Tactical</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Publish Mode</label>
+        <select id="publish-mode">
+          <option value="DRAFT">Draft (review first)</option>
+          <option value="LIVE">Live (auto-publish)</option>
+        </select>
+      </div>
     </div>
-  </div>
-</div>
 
-<div class="divider"></div>
+    <div class="divider"></div>
 
-<!-- LEAGUES -->
-<div class="sidebar-section">
-  <div class="section-label">⚽ Leagues to Monitor</div>
-  <div class="leagues-grid" id="leagues-grid">
-    <!-- populated by JS -->
-  </div>
-</div>
-
-<div class="divider"></div>
-
-<!-- POST SETTINGS -->
-<div class="sidebar-section">
-  <div class="section-label">⚙️ Post Settings</div>
-  <div class="input-group">
-    <label class="input-label">Post Language</label>
-    <select id="post-lang">
-      <option value="English">English</option>
-      <option value="Spanish">Spanish</option>
-      <option value="French">French</option>
-      <option value="Arabic">Arabic</option>
-      <option value="Portuguese">Portuguese</option>
-      <option value="German">German</option>
-      <option value="Italian">Italian</option>
-    </select>
-  </div>
-  <div class="input-group">
-    <label class="input-label">Writing Style</label>
-    <select id="post-style">
-      <option value="energetic and engaging">⚡ Energetic & Engaging</option>
-      <option value="professional journalist">📰 Professional Journalist</option>
-      <option value="casual and fun">😄 Casual & Fun</option>
-      <option value="analytical and tactical">🎯 Analytical & Tactical</option>
-    </select>
-  </div>
-  <div class="input-group">
-    <label class="input-label">Publish Mode</label>
-    <select id="publish-mode">
-      <option value="DRAFT">Draft (review first)</option>
-      <option value="LIVE">Live (auto-publish)</option>
-    </select>
-  </div>
-</div>
-
-<div class="divider"></div>
-
-<!-- LOG -->
-<div class="sidebar-section">
-  <div class="section-label">📋 Activity Log</div>
-  <div class="log-panel" id="log-panel">
-    <div class="log-line info"><span class="ts">--:--</span><span class="msg">Dashboard ready.</span></div>
-  </div>
-</div>
-```
+    <!-- LOG -->
+    <div class="sidebar-section">
+      <div class="section-label">📋 Activity Log</div>
+      <div class="log-panel" id="log-panel">
+        <div class="log-line info"><span class="ts">--:--</span><span class="msg">Dashboard ready.</span></div>
+      </div>
+    </div>
 
   </aside>
 
@@ -758,16 +825,14 @@ border: 1px solid rgba(0,212,255,.2);
       </div>
     </div>
 
-```
-<!-- GAMES CONTAINER -->
-<div id="games-container">
-  <div class="empty-state">
-    <div class="icon">📡</div>
-    <h3>No games loaded yet</h3>
-    <p>Configure your API keys, select leagues and click <strong>Scan Leagues</strong> to detect today's matches and generate AI content automatically.</p>
-  </div>
-</div>
-```
+    <!-- GAMES CONTAINER -->
+    <div id="games-container">
+      <div class="empty-state">
+        <div class="icon">📡</div>
+        <h3>No games loaded yet</h3>
+        <p>Configure your API keys, select leagues and click <strong>Scan Leagues</strong> to detect today's matches and generate AI content automatically.</p>
+      </div>
+    </div>
 
   </main>
 </div>
@@ -780,37 +845,37 @@ border: 1px solid rgba(0,212,255,.2);
 // ─── CONFIG ────────────────────────────────────────────────────────────────
 const LEAGUES = [
   // ── FOOTBALL ──
-  { id: 'soccer/uefa.champions', name: 'UCL',          emoji: '\u{1F3C6}', label: 'champions league', espn: true },
-  { id: 'soccer/eng.1',          name: 'Premier Lg',   emoji: '\u{26BD}',  label: 'premier league',   espn: true },
-  { id: 'soccer/esp.1',          name: 'La Liga',      emoji: '\u{26BD}',  label: 'la liga',           espn: true },
-  { id: 'soccer/ita.1',          name: 'Serie A',      emoji: '\u{26BD}',  label: 'serie a',           espn: true },
-  { id: 'soccer/ger.1',          name: 'Bundesliga',   emoji: '\u{26BD}',  label: 'bundesliga',        espn: true },
-  { id: 'soccer/fra.1',          name: 'Ligue 1',      emoji: '\u{26BD}',  label: 'ligue 1',           espn: true },
-  { id: 'soccer/uefa.europa',    name: 'Europa Lg',    emoji: '\u{1F7E0}', label: 'europa league',     espn: true },
-  { id: 'soccer/eng.fa',         name: 'FA Cup',       emoji: '\u{26BD}',  label: 'fa cup',            espn: true },
-  { id: 'soccer/usa.1',          name: 'MLS',          emoji: '\u{26BD}',  label: 'mls',               espn: true },
-  { id: 'soccer/tur.1',          name: 'Super Lig',    emoji: '\u{26BD}',  label: 'turkish',           espn: true },
+  { id: 'soccer/uefa.champions', name: 'UCL',          emoji: '🏆', label: 'champions league', espn: true },
+  { id: 'soccer/eng.1',          name: 'Premier Lg',   emoji: '⚽',  label: 'premier league',   espn: true },
+  { id: 'soccer/esp.1',          name: 'La Liga',      emoji: '⚽',  label: 'la liga',           espn: true },
+  { id: 'soccer/ita.1',          name: 'Serie A',      emoji: '⚽',  label: 'serie a',           espn: true },
+  { id: 'soccer/ger.1',          name: 'Bundesliga',   emoji: '⚽',  label: 'bundesliga',        espn: true },
+  { id: 'soccer/fra.1',          name: 'Ligue 1',      emoji: '⚽',  label: 'ligue 1',           espn: true },
+  { id: 'soccer/uefa.europa',    name: 'Europa Lg',    emoji: '🟠',  label: 'europa league',     espn: true },
+  { id: 'soccer/eng.fa',         name: 'FA Cup',       emoji: '⚽',  label: 'fa cup',            espn: true },
+  { id: 'soccer/usa.1',          name: 'MLS',          emoji: '⚽',  label: 'mls',               espn: true },
+  { id: 'soccer/tur.1',          name: 'Super Lig',    emoji: '⚽',  label: 'turkish',           espn: true },
   // ── BASKETBALL ──
-  { id: 'basketball/nba',        name: 'NBA',          emoji: '\u{1F3C0}', label: 'nba',               espn: true },
+  { id: 'basketball/nba',        name: 'NBA',          emoji: '🏀',  label: 'nba',               espn: true },
   // ── AMERICAN FOOTBALL ──
-  { id: 'football/nfl',          name: 'NFL',          emoji: '\u{1F3C8}', label: 'nfl',               espn: true },
+  { id: 'football/nfl',          name: 'NFL',          emoji: '🏈',  label: 'nfl',               espn: true },
   // ── ICE HOCKEY ──
-  { id: 'hockey/nhl',            name: 'NHL / Ice Hockey', emoji: '\u{1F3D2}', label: 'ice hockey',   espn: true },
+  { id: 'hockey/nhl',            name: 'NHL / Ice Hockey', emoji: '🏒', label: 'ice hockey',   espn: true },
   // ── MOTORSPORT ──
-  { id: 'racing/f1',             name: 'Formula 1',    emoji: '\u{1F3CE}', label: 'f1',                espn: true },
-  { id: 'racing/motogp',         name: 'MotoGP',       emoji: '\u{1F3CD}', label: 'motogp',            espn: false },
-  { id: 'racing/indycar',        name: 'IndyCar',      emoji: '\u{1F3CE}', label: 'indycar',           espn: false },
-  { id: 'racing/lemans',         name: 'Le Mans / WEC',emoji: '\u{1F3CE}', label: 'le mans',           espn: false },
+  { id: 'racing/f1',             name: 'Formula 1',    emoji: '🏎',  label: 'f1',                espn: true },
+  { id: 'racing/motogp',         name: 'MotoGP',       emoji: '🏍',  label: 'motogp',            espn: false },
+  { id: 'racing/indycar',        name: 'IndyCar',      emoji: '🏎',  label: 'indycar',           espn: false },
+  { id: 'racing/lemans',         name: 'Le Mans / WEC',emoji: '🏎',  label: 'le mans',           espn: false },
   // ── COMBAT SPORTS ──
-  { id: 'mma/ufc',               name: 'UFC / MMA',    emoji: '\u{1F94A}', label: 'ufc',               espn: false },
-  { id: 'boxing/wbc',            name: 'Boxing',       emoji: '\u{1F94A}', label: 'boxing',            espn: false },
-  { id: 'wrestling/wwe',         name: 'WWE',          emoji: '\u{1F93C}', label: 'wwe',               espn: false },
+  { id: 'mma/ufc',               name: 'UFC / MMA',    emoji: '🥊',  label: 'ufc',               espn: false },
+  { id: 'boxing/wbc',            name: 'Boxing',       emoji: '🥊',  label: 'boxing',            espn: false },
+  { id: 'wrestling/wwe',         name: 'WWE',          emoji: '🤼',  label: 'wwe',               espn: false },
   // ── TENNIS ──
-  { id: 'tennis/atp',            name: 'Tennis',       emoji: '\u{1F3BE}', label: 'tennis',            espn: false },
+  { id: 'tennis/atp',            name: 'Tennis',       emoji: '🎾',  label: 'tennis',            espn: false },
   // ── CYCLING ──
-  { id: 'cycling/road',          name: 'Cycling',      emoji: '\u{1F6B4}', label: 'cycling',           espn: false },
+  { id: 'cycling/road',          name: 'Cycling',      emoji: '🚴',  label: 'cycling',           espn: false },
   // ── CRICKET ──
-  { id: 'cricket/icc',           name: 'Cricket',      emoji: '\u{1F3CF}', label: 'cricket',           espn: false },
+  { id: 'cricket/icc',           name: 'Cricket',      emoji: '🏏',  label: 'cricket',           espn: false },
 ];
 
 const DEFAULT_ACTIVE = ['soccer/uefa.champions','soccer/eng.1','soccer/esp.1','soccer/ita.1','soccer/ger.1','racing/f1','basketball/nba','mma/ufc','tennis/atp'];
@@ -818,6 +883,13 @@ const DEFAULT_ACTIVE = ['soccer/uefa.champions','soccer/eng.1','soccer/esp.1','s
 let activeLeagues  = new Set(DEFAULT_ACTIVE);
 let detectedGames  = [];
 let config         = {};
+
+// Google OAuth variables
+let oauthToken     = null;
+let oauthUser      = null;
+let tokenExpiresAt = 0;
+let tokenClient    = null;
+const GOOGLE_CLIENT_ID = '985566043500-5iktnbam2up75fehdkdfhp4sn829jrhd.apps.googleusercontent.com'; // same as v5.5
 
 // ESPN public API supports CORS natively — no proxy needed
 function espnUrl(leagueId) {
@@ -829,17 +901,120 @@ window.addEventListener('DOMContentLoaded', function() {
   loadConfig();
   buildLeaguesGrid();
   setInterval(autoRefreshScores, 3 * 60 * 1000);
+  // Initialise Google token client after GIS loads
+  if (typeof google !== 'undefined' && google.accounts) {
+    initTokenClient();
+  } else {
+    window.addEventListener('load', () => {
+      if (typeof google !== 'undefined' && google.accounts) initTokenClient();
+    });
+  }
 });
 
-// ─── OAUTH STATE ───────────────────────────────────────────────────────────
-var oauthToken     = null;   // Google OAuth access token
-var oauthUser      = null;   // { name, email, picture }
-var tokenExpiresAt = 0;
+// ─── GOOGLE OAUTH (v5.5 style) ────────────────────────────────────────────
+function initTokenClient() {
+  if (!GOOGLE_CLIENT_ID) return;
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: 'https://www.googleapis.com/auth/blogger',
+    callback: (response) => {
+      if (response.error) {
+        toast('Authentication error: ' + response.error, 'err');
+        return;
+      }
+      oauthToken = response.access_token;
+      tokenExpiresAt = Date.now() + 3600 * 1000; // 1 hour
+      oauthUser = { name: 'Google User', email: '', picture: '' };
+      fetchGoogleProfile(); // try to get name/email from token
+      setSignedInUI(oauthUser);
+      saveConfig();
+      toast('Signed in ✓', 'ok');
+      log('ok', 'Signed in with Google');
+    }
+  });
+}
 
-// Google OAuth client ID (using a public Blogger-scoped client)
-// We use token model (implicit flow) — no redirect, no server needed
-var GOOGLE_CLIENT_ID = ''; // filled from localStorage or user entry — see initOAuth
+async function fetchGoogleProfile() {
+  if (!oauthToken) return;
+  try {
+    const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { 'Authorization': 'Bearer ' + oauthToken }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      oauthUser = {
+        name: data.name || 'Google User',
+        email: data.email || '',
+        picture: data.picture || ''
+      };
+      setSignedInUI(oauthUser);
+      saveConfig();
+    }
+  } catch (e) {
+    console.warn('Could not fetch profile', e);
+  }
+}
 
+function handleAuth() {
+  if (oauthToken && Date.now() < tokenExpiresAt) {
+    signOut();
+  } else {
+    if (!tokenClient) {
+      if (typeof google !== 'undefined' && google.accounts) {
+        initTokenClient();
+      } else {
+        toast('Google API not loaded yet. Please refresh.', 'err');
+        return;
+      }
+    }
+    tokenClient.requestAccessToken();
+  }
+}
+
+function signOut() {
+  if (oauthToken) {
+    // Revoke token (optional)
+    google.accounts.oauth2.revoke(oauthToken, () => {});
+  }
+  oauthToken = null;
+  oauthUser = null;
+  tokenExpiresAt = 0;
+  setSignedInUI(null);
+  saveConfig();
+  toast('Signed out', 'info');
+  log('info', 'Signed out');
+}
+
+function setSignedInUI(user) {
+  const signinBlock = document.getElementById('signin-block');
+  const signedinBlock = document.getElementById('signedin-block');
+  const statusPill = document.getElementById('blogger-status-pill');
+  if (!signinBlock || !signedinBlock) return;
+
+  if (user && oauthToken && Date.now() < tokenExpiresAt) {
+    signinBlock.style.display = 'none';
+    signedinBlock.classList.add('visible');
+    document.getElementById('user-name').textContent = user.name || 'User';
+    document.getElementById('user-email').textContent = user.email || '';
+    const avatar = document.getElementById('user-avatar');
+    if (user.picture) {
+      avatar.src = user.picture;
+      avatar.style.display = 'block';
+    } else {
+      avatar.style.display = 'none';
+    }
+    statusPill.textContent = '✓ Signed in';
+    statusPill.className = 'pill dot ok';
+  } else {
+    signinBlock.style.display = 'block';
+    signedinBlock.classList.remove('visible');
+    statusPill.textContent = '⚪ Not signed in';
+    statusPill.className = 'pill dot';
+  }
+  updatePills();
+}
+
+// ─── CONFIG LOAD/SAVE ──────────────────────────────────────────────────────
 function loadConfig() {
   try {
     var saved = JSON.parse(localStorage.getItem('s803_config') || '{}');
@@ -848,13 +1023,19 @@ function loadConfig() {
     if (saved.style)         document.getElementById('post-style').value = saved.style;
     if (saved.publishMode)   document.getElementById('publish-mode').value = saved.publishMode;
     if (saved.activeLeagues) activeLeagues = new Set(saved.activeLeagues);
-    if (saved.clientId)      GOOGLE_CLIENT_ID = saved.clientId;
     // Restore saved OAuth token if still valid
     if (saved.oauthToken && saved.tokenExpiresAt && Date.now() < saved.tokenExpiresAt) {
       oauthToken     = saved.oauthToken;
       oauthUser      = saved.oauthUser || null;
       tokenExpiresAt = saved.tokenExpiresAt;
       setSignedInUI(oauthUser);
+      log('ok', 'Session restored – ' + Math.round((tokenExpiresAt - Date.now()) / 60000) + 'm remaining');
+    } else if (saved.oauthToken) {
+      oauthToken = null; oauthUser = null; tokenExpiresAt = 0;
+      setSignedInUI(null);
+      log('info', 'Previous token expired – sign in again');
+    } else {
+      setSignedInUI(null);
     }
     config = saved;
     updatePills();
@@ -868,10 +1049,9 @@ function saveConfig() {
     style:         document.getElementById('post-style').value,
     publishMode:   document.getElementById('publish-mode').value,
     activeLeagues: Array.from(activeLeagues),
-    clientId:      GOOGLE_CLIENT_ID,
     oauthToken:    oauthToken,
     oauthUser:     oauthUser,
-    tokenExpiresAt:tokenExpiresAt,
+    tokenExpiresAt: tokenExpiresAt,
   };
   localStorage.setItem('s803_config', JSON.stringify(config));
   updatePills();
@@ -883,111 +1063,14 @@ function updatePills() {
   var apiPill  = document.getElementById('api-status-pill');
   var blogPill = document.getElementById('blogger-status-pill');
   apiPill.className   = 'pill dot ok';
-  apiPill.textContent = '\u2713 Auto-Content On';
+  apiPill.textContent = '✓ Auto-Content On';
   if (oauthToken && Date.now() < tokenExpiresAt) {
     blogPill.className  = 'pill dot ok';
-    blogPill.textContent = '\u2713 ' + (oauthUser && oauthUser.name ? oauthUser.name.split(' ')[0] : 'Signed In');
+    blogPill.textContent = '✓ ' + (oauthUser && oauthUser.name ? oauthUser.name.split(' ')[0] : 'Signed In');
   } else {
-    blogPill.className  = 'pill dot err';
-    blogPill.textContent = '\u2717 Not signed in';
+    blogPill.className  = 'pill dot';
+    blogPill.textContent = '⚪ Not signed in';
   }
-}
-
-// ─── GOOGLE OAUTH (GIS Token Model — no redirect URI needed) ───────────────
-var gisClient = null;
-
-function signInWithGoogle() {
-  if (!GOOGLE_CLIENT_ID) {
-    var cid = prompt(
-      'Paste your Google OAuth Client ID below.\n\n' +
-      'HOW TO GET IT (free, 3 min):\n' +
-      '1. console.cloud.google.com → New project\n' +
-      '2. APIs & Services → Library → enable "Blogger API v3"\n' +
-      '3. APIs & Services → Credentials → + CREATE CREDENTIALS\n' +
-      '   → OAuth client ID → Web application\n' +
-      '4. Authorised JavaScript origins → ADD:\n' +
-      '   ' + location.origin + '\n' +
-      '   (NO redirect URIs needed)\n' +
-      '5. Click CREATE → copy the Client ID\n\n' +
-      'Client ID (ends in .apps.googleusercontent.com):'
-    );
-    if (!cid || !cid.trim()) return;
-    GOOGLE_CLIENT_ID = cid.trim();
-    saveConfig();
-  }
-  requestGISToken();
-}
-
-function requestGISToken() {
-  // google.accounts.oauth2 is loaded via the GIS script tag
-  // initTokenClient uses a UX flow that needs NO redirect_uri
-  if (typeof google === 'undefined' || !google.accounts) {
-    log('err', 'Google Identity Services not loaded — check your internet connection');
-    toast('GIS not loaded', 'err');
-    return;
-  }
-
-  gisClient = google.accounts.oauth2.initTokenClient({
-    client_id: GOOGLE_CLIENT_ID,
-    scope: 'https://www.googleapis.com/auth/blogger https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
-    callback: function(tokenResponse) {
-      if (tokenResponse.error) {
-        log('err', 'OAuth error: ' + tokenResponse.error);
-        toast('Sign-in failed: ' + tokenResponse.error, 'err');
-        return;
-      }
-      oauthToken     = tokenResponse.access_token;
-      var expiresIn  = parseInt(tokenResponse.expires_in || '3600', 10);
-      tokenExpiresAt = Date.now() + expiresIn * 1000;
-      fetchGoogleProfile();
-    },
-  });
-
-  gisClient.requestAccessToken({ prompt: 'select_account' });
-}
-
-async function fetchGoogleProfile() {
-  try {
-    var r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-      headers: { 'Authorization': 'Bearer ' + oauthToken }
-    });
-    var d = await r.json();
-    oauthUser = { name: d.name || '', email: d.email || '', picture: d.picture || '' };
-    setSignedInUI(oauthUser);
-    saveConfig();
-    log('ok', '\u2713 Signed in as ' + oauthUser.email);
-    toast('\u2713 Signed in as ' + oauthUser.name, 'ok');
-  } catch(e) {
-    log('err', 'Profile fetch failed: ' + e.message);
-    setSignedInUI(null);
-  }
-}
-
-function setSignedInUI(user) {
-  var signinBlock   = document.getElementById('signin-block');
-  var signedinBlock = document.getElementById('signedin-block');
-  if (!signinBlock || !signedinBlock) return;
-  if (user && oauthToken) {
-    signinBlock.style.display   = 'none';
-    signedinBlock.classList.add('visible');
-    document.getElementById('user-name').textContent  = user.name  || '';
-    document.getElementById('user-email').textContent = user.email || '';
-    var av = document.getElementById('user-avatar');
-    if (user.picture) { av.src = user.picture; av.style.display = 'block'; }
-    else av.style.display = 'none';
-  } else {
-    signinBlock.style.display   = 'block';
-    signedinBlock.classList.remove('visible');
-  }
-  updatePills();
-}
-
-function signOut() {
-  oauthToken = null; oauthUser = null; tokenExpiresAt = 0;
-  setSignedInUI(null);
-  saveConfig();
-  log('ok', 'Signed out.');
-  toast('Signed out', 'ok');
 }
 
 // ─── LEAGUES GRID ──────────────────────────────────────────────────────────
@@ -1001,7 +1084,7 @@ function buildLeaguesGrid() {
     html += '<div class="league-toggle' + (isActive ? ' active' : '') + '" '
           + 'data-league-id="' + l.id + '" '
           + 'onclick="toggleLeague(this)">'
-          + '<div class="lcheck">' + (isActive ? '\u2713' : '') + '</div>'
+          + '<div class="lcheck">' + (isActive ? '✓' : '') + '</div>'
           + '<span>' + l.emoji + ' ' + l.name + '</span>'
           + '</div>';
   }
@@ -1018,7 +1101,7 @@ function toggleLeague(el) {
   } else {
     activeLeagues.add(id);
     el.classList.add('active');
-    el.querySelector('.lcheck').textContent = '\u2713';
+    el.querySelector('.lcheck').textContent = '✓';
   }
 }
 
@@ -1098,7 +1181,7 @@ async function scanAllLeagues() {
           blogPostId: null, status: 'idle', thumbUrl: null, isManual: true
         });
         totalFound++;
-        log('ok', '\u2713 ' + league.name + ': added as manual event');
+        log('ok', '✓ ' + league.name + ': added as manual event');
         continue;
       }
       var events = await fetchESPN(league.id);
@@ -1113,15 +1196,15 @@ async function scanAllLeagues() {
         });
         totalFound++;
       }
-      log('ok', '\u2713 ' + league.name + ': ' + events.length + ' game(s)');
+      log('ok', '✓ ' + league.name + ': ' + events.length + ' game(s)');
     } catch(e) {
-      log('err', '\u2717 ' + league.name + ': ' + e.message);
+      log('err', '✗ ' + league.name + ': ' + e.message);
     }
   }
 
   document.getElementById('main-subtitle').textContent =
     totalFound + ' game' + (totalFound !== 1 ? 's' : '') +
-    ' found across ' + selected.length + ' leagues \u00b7 ' +
+    ' found across ' + selected.length + ' leagues · ' +
     new Date().toLocaleTimeString();
 
   renderGames();
@@ -1159,7 +1242,7 @@ async function refreshScores() {
           gd2.espnEvent = fresh;
           var isNowPost = fresh.status && fresh.status.type && fresh.status.type.state === 'post';
           if (!wasPost && isNowPost && gd2.preContent) {
-            log('info', 'Game ended: ' + getMatchTitle(gd2) + ' \u2192 generating highlights...');
+            log('info', 'Game ended: ' + getMatchTitle(gd2) + ' → generating highlights...');
             await generateHighlightContent(j);
           }
         }
@@ -1200,7 +1283,7 @@ function getScore(gd) {
 function renderGames() {
   var container = document.getElementById('games-container');
   if (!detectedGames.length) {
-    container.innerHTML = '<div class="empty-state"><div class="icon">\u{1F4E1}</div><h3>No games found</h3><p>No matches scheduled today for the selected leagues. Try selecting more leagues or check back later.</p></div>';
+    container.innerHTML = '<div class="empty-state"><div class="icon">📡</div><h3>No games found</h3><p>No matches scheduled today for the selected leagues. Try selecting more leagues or check back later.</p></div>';
     return;
   }
 
@@ -1212,7 +1295,7 @@ function renderGames() {
     var score = getScore(gd);
     var status = (gd.espnEvent.status && gd.espnEvent.status.type && gd.espnEvent.status.type.shortDetail) || '';
     var stateCls = state === 'in' ? 'live-lbl' : state === 'post' ? 'ft-lbl' : 'pre-lbl';
-    var stateLbl = state === 'in' ? '\u25CF LIVE' : state === 'post' ? 'FT' : 'UPCOMING';
+    var stateLbl = state === 'in' ? '● LIVE' : state === 'post' ? 'FT' : 'UPCOMING';
 
     var homeName   = (c.home.team && c.home.team.displayName) || '?';
     var awayName   = (c.away.team && c.away.team.displayName) || '?';
@@ -1230,18 +1313,18 @@ function renderGames() {
       ? '<div class="vs-score">' + score.home + '<span style="color:var(--border2);margin:0 3px">-</span>' + score.away + '</div>'
       : '<div class="vs-score" style="font-size:13px;color:var(--muted)">VS</div>';
 
-    var statusBadge = gd.status === 'posted'  ? '<span class="post-status posted">\u2713 Posted</span>'
-                    : gd.status === 'updated' ? '<span class="post-status updated">\u2191 Updated</span>'
-                    : gd.status === 'draft'   ? '<span class="post-status draft">\u25CE Draft</span>'
-                    :                           '<span class="post-status idle">\u25CB Not Posted</span>';
+    var statusBadge = gd.status === 'posted'  ? '<span class="post-status posted">✓ Posted</span>'
+                    : gd.status === 'updated' ? '<span class="post-status updated">↑ Updated</span>'
+                    : gd.status === 'draft'   ? '<span class="post-status draft">◎ Draft</span>'
+                    :                           '<span class="post-status idle">○ Not Posted</span>';
 
-    var previewText   = gd.preContent   ? '<div class="content-text">' + escHtml(gd.preContent)   + '</div>' : '<div class="content-empty">\u23F3 Generating content...</div>';
-    var highlightText = gd.highlightContent ? '<div class="content-text">' + escHtml(gd.highlightContent) + '</div>' : '<div class="content-empty">' + (state === 'post' ? '\u23F3 Generating highlights...' : '\u23F1 Available after match ends') + '</div>';
+    var previewText   = gd.preContent   ? '<div class="content-text">' + escHtml(gd.preContent)   + '</div>' : '<div class="content-empty">⏳ Generating content...</div>';
+    var highlightText = gd.highlightContent ? '<div class="content-text">' + escHtml(gd.highlightContent) + '</div>' : '<div class="content-empty">' + (state === 'post' ? '⏳ Generating highlights...' : '⏱ Available after match ends') + '</div>';
 
     var postPreviewDisabled = gd.preContent ? '' : 'disabled';
     var highlightBtns = state === 'post' ? (
-      '<button class="btn btn-secondary" onclick="regenHighlights(' + idx + ')"><span class="btn-text">\u{1F504} Regen Highlights</span><div class="spin"></div></button>' +
-      (gd.highlightContent ? '<button class="btn btn-primary" onclick="postToBlogger(' + idx + ',\'highlights\')"><span class="btn-text">\u{1F4E4} Post Highlights</span><div class="spin"></div></button>' : '')
+      '<button class="btn btn-secondary" onclick="regenHighlights(' + idx + ')"><span class="btn-text">🔄 Regen Highlights</span><div class="spin"></div></button>' +
+      (gd.highlightContent ? '<button class="btn btn-primary" onclick="postToBlogger(' + idx + ',\'highlights\')"><span class="btn-text">📤 Post Highlights</span><div class="spin"></div></button>' : '')
     ) : '';
 
     html += '<div class="game-card" id="card-' + idx + '">'
@@ -1258,348 +1341,352 @@ function renderGames() {
       + '</div>'
       + '<div class="game-content-panel">'
         + '<div class="content-tabs">'
-          + '<button class="ctab active" id="tab-pre-' + idx + '" onclick="switchTab(' + idx + ',\'preview\',this)">\u{1F4DD} Preview Post</button>'
-          + '<button class="ctab" id="tab-hl-' + idx + '" onclick="switchTab(' + idx + ',\'highlights\',this)">\u{1F3C6} Highlights Post</button>'
+          + '<button class="ctab active" id="tab-pre-' + idx + '" onclick="switchTab(' + idx + ',\'preview\',this)">📝 Preview Post</button>'
+          + '<button class="ctab" id="tab-hl-' + idx + '" onclick="switchTab(' + idx + ',\'highlights\',this)">🏆 Highlights Post</button>'
         + '</div>'
         + '<div class="content-area">'
           + '<div id="text-preview-' + idx + '">' + previewText + '</div>'
           + '<div id="text-highlights-' + idx + '" style="display:none">' + highlightText + '</div>'
         + '</div>'
         + '<div class="iframe-row">'
-          + '<div class="iframe-label">&#x1F4FA; Stream URL (iframe src) <span class="badge-tip">OPTIONAL</span></div>'
+          + '<div class="iframe-label">📺 Stream URL (iframe src) <span class="badge-tip">OPTIONAL</span></div>'
           + '<textarea class="iframe-input" id="iframe-src-' + idx + '" rows="2" placeholder="Paste the src= URL of your iframe here e.g. https://soulmap1.blogspot.com/p/media-player.html?mora=https://...m3u8"></textarea>'
-
-```
-    + '</div>'
-    + '<div class="content-actions">'
-      + '<button class="btn btn-secondary" onclick="regenPreview(' + idx + ')"><span class="btn-text">\u{1F504} Regen</span><div class="spin"></div></button>'
-      + highlightBtns
-      + '<button class="btn btn-primary" onclick="postToBlogger(' + idx + ',\'preview\')" ' + postPreviewDisabled + '><span class="btn-text">\u{1F4E4} Post Preview</span><div class="spin"></div></button>'
-    + '</div>'
-  + '</div>'
-+ '</div>';
-```
-
-}
-container.innerHTML = html;
+        + '</div>'
+        + '<div class="content-actions">'
+          + '<button class="btn btn-secondary" onclick="regenPreview(' + idx + ')"><span class="btn-text">🔄 Regen</span><div class="spin"></div></button>'
+          + highlightBtns
+          + '<button class="btn btn-primary" onclick="postToBlogger(' + idx + ',\'preview\')" ' + postPreviewDisabled + '><span class="btn-text">📤 Post Preview</span><div class="spin"></div></button>'
+        + '</div>'
+      + '</div>'
+    + '</div>';
+  }
+  container.innerHTML = html;
 }
 
 function switchTab(idx, tab, el) {
-document.getElementById(‘tab-pre-’ + idx).classList.toggle(‘active’, tab === ‘preview’);
-document.getElementById(‘tab-hl-’  + idx).classList.toggle(‘active’, tab === ‘highlights’);
-document.getElementById(‘text-preview-’    + idx).style.display = tab === ‘preview’    ? ‘block’ : ‘none’;
-document.getElementById(‘text-highlights-’ + idx).style.display = tab === ‘highlights’ ? ‘block’ : ‘none’;
+  document.getElementById('tab-pre-' + idx).classList.toggle('active', tab === 'preview');
+  document.getElementById('tab-hl-'  + idx).classList.toggle('active', tab === 'highlights');
+  document.getElementById('text-preview-'    + idx).style.display = tab === 'preview'    ? 'block' : 'none';
+  document.getElementById('text-highlights-' + idx).style.display = tab === 'highlights' ? 'block' : 'none';
 }
 
 // ─── CONTENT PHRASES ──────────────────────────────────────────────────────
 var PREVIEW_PHRASES = [
-“This is set to be a thrilling encounter as both sides go head to head in an exciting”,
-“Football fans are in for a treat as two top-flight clubs clash in what promises to be a compelling”,
-“All eyes are on this fixture as both managers prepare their squads for a crucial”,
-“Expect fireworks as these two sides renew their rivalry in a high-stakes”,
-“Supporters will be glued to their screens for this highly anticipated”,
+  "This is set to be a thrilling encounter as both sides go head to head in an exciting",
+  "Football fans are in for a treat as two top-flight clubs clash in what promises to be a compelling",
+  "All eyes are on this fixture as both managers prepare their squads for a crucial",
+  "Expect fireworks as these two sides renew their rivalry in a high-stakes",
+  "Supporters will be glued to their screens for this highly anticipated",
 ];
 var FORM_PHRASES = [
-“Both teams arrive in good form, having picked up positive results in their recent outings.”,
-“Recent league form suggests this could be evenly contested, with neither side having a clear edge.”,
-“Head-to-head records show this fixture typically produces goals and drama in equal measure.”,
-“Momentum is firmly on one side heading into this contest following a run of impressive performances.”,
-“Key injuries and suspensions could play a decisive role in shaping the outcome of this fixture.”,
+  "Both teams arrive in good form, having picked up positive results in their recent outings.",
+  "Recent league form suggests this could be evenly contested, with neither side having a clear edge.",
+  "Head-to-head records show this fixture typically produces goals and drama in equal measure.",
+  "Momentum is firmly on one side heading into this contest following a run of impressive performances.",
+  "Key injuries and suspensions could play a decisive role in shaping the outcome of this fixture.",
 ];
 var PLAYER_PHRASES = [
-“All eyes will be on the attacking players who have been in devastating form this season.”,
-“The midfield battle could prove decisive, with creative players on both sides capable of turning the game.”,
-“Set pieces and dead-ball situations are likely to play a role, with both teams possessing aerial threats.”,
-“The defensive units will be tested by pacey forwards looking to exploit space behind the backline.”,
-“Experienced campaigners in both squads will be eager to stamp their authority on this fixture.”,
+  "All eyes will be on the attacking players who have been in devastating form this season.",
+  "The midfield battle could prove decisive, with creative players on both sides capable of turning the game.",
+  "Set pieces and dead-ball situations are likely to play a role, with both teams possessing aerial threats.",
+  "The defensive units will be tested by pacey forwards looking to exploit space behind the backline.",
+  "Experienced campaigners in both squads will be eager to stamp their authority on this fixture.",
 ];
 var CTA_PHRASES = [
-“Watch the full live stream free on Sports 803 — no subscription required, no hidden fees.”,
-“Stream every kick free on Sports 803, your go-to destination for live sports online.”,
-“Don’t miss a single minute — catch the free live stream exclusively on Sports 803.”,
-“Follow every tackle, goal, and moment of magic live and free on Sports 803.”,
-“Tune in free on Sports 803 and enjoy the action from wherever you are.”,
+  "Watch the full live stream free on Sports 803 — no subscription required, no hidden fees.",
+  "Stream every kick free on Sports 803, your go-to destination for live sports online.",
+  "Don’t miss a single minute — catch the free live stream exclusively on Sports 803.",
+  "Follow every tackle, goal, and moment of magic live and free on Sports 803.",
+  "Tune in free on Sports 803 and enjoy the action from wherever you are.",
 ];
 var HIGHLIGHT_PHRASES = [
-“A dramatic contest delivered plenty of talking points as the final whistle confirmed”,
-“It was an enthralling battle that lived up to its billing and produced an exciting”,
-“Both sets of supporters were treated to a pulsating match that swung back and forth in a”,
-“The game had everything — goals, tension, and standout performances — in an unforgettable”,
-“Tactical battles and individual brilliance combined to produce a spectacular result in this”,
+  "A dramatic contest delivered plenty of talking points as the final whistle confirmed",
+  "It was an enthralling battle that lived up to its billing and produced an exciting",
+  "Both sets of supporters were treated to a pulsating match that swung back and forth in a",
+  "The game had everything — goals, tension, and standout performances — in an unforgettable",
+  "Tactical battles and individual brilliance combined to produce a spectacular result in this",
 ];
 var HIGHLIGHT_RESULT = [
-“The match statistics tell only part of the story in what was a gripping ninety minutes.”,
-“Goals, controversy, and breathtaking skill made this one of the most memorable fixtures of the season.”,
-“Tactical discipline and clinical finishing were the hallmarks of the winning performance today.”,
-“Both managers will have plenty to reflect on after a contest packed with incident and quality.”,
-“The game unfolded exactly as anticipated, with both teams creating plenty of goalscoring opportunities.”,
+  "The match statistics tell only part of the story in what was a gripping ninety minutes.",
+  "Goals, controversy, and breathtaking skill made this one of the most memorable fixtures of the season.",
+  "Tactical discipline and clinical finishing were the hallmarks of the winning performance today.",
+  "Both managers will have plenty to reflect on after a contest packed with incident and quality.",
+  "The game unfolded exactly as anticipated, with both teams creating plenty of goalscoring opportunities.",
 ];
 var HIGHLIGHT_CTA = [
-“Relive all the goals and highlights free on Sports 803 — full match replay now available.”,
-“Watch the extended highlights and full match replay free on Sports 803 anytime.”,
-“Sports 803 has your full match replay and extended highlights — stream free now.”,
-“Catch every goal and key moment again in the free full match replay on Sports 803.”,
-“The full match and highlights are waiting for you — watch free on Sports 803.”,
+  "Relive all the goals and highlights free on Sports 803 — full match replay now available.",
+  "Watch the extended highlights and full match replay free on Sports 803 anytime.",
+  "Sports 803 has your full match replay and extended highlights — stream free now.",
+  "Catch every goal and key moment again in the free full match replay on Sports 803.",
+  "The full match and highlights are waiting for you — watch free on Sports 803.",
 ];
 
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
 function generatePreviewText(homeName, awayName, leagueName, venue, dateStr) {
-var sep     = Math.random() > 0.5 ? ’ vs ’ : ’ x ‘;
-var venueTxt = venue   ? ’ at ’ + venue   : ‘’;
-var dateTxt  = dateStr ? ’ on ’ + dateStr : ’ today’;
-var p1 = pick(PREVIEW_PHRASES) + ’ ’ + leagueName + ’ clash. ’
-+ homeName + sep + awayName + venueTxt + dateTxt
-+ ’ — watch the free live stream on Sports 803.’;
-var p2 = pick(FORM_PHRASES) + ’ ’ + pick(PLAYER_PHRASES);
-var p3 = pick(CTA_PHRASES);
-var text = p1 + ‘\n\n’ + p2 + ‘\n\n’ + p3;
-return text.length > 580 ? text.slice(0, 577) + ‘…’ : text;
+  var sep     = Math.random() > 0.5 ? ' vs ' : ' x ';
+  var venueTxt = venue   ? ' at ' + venue   : '';
+  var dateTxt  = dateStr ? ' on ' + dateStr : ' today';
+  var p1 = pick(PREVIEW_PHRASES) + ' ' + leagueName + ' clash. '
+    + homeName + sep + awayName + venueTxt + dateTxt
+    + ' — watch the free live stream on Sports 803.';
+  var p2 = pick(FORM_PHRASES) + ' ' + pick(PLAYER_PHRASES);
+  var p3 = pick(CTA_PHRASES);
+  var text = p1 + '\n\n' + p2 + '\n\n' + p3;
+  return text.length > 580 ? text.slice(0, 577) + '…' : text;
 }
 
 function generateHighlightText(homeName, awayName, homeScore, awayScore, leagueName, headlines) {
-var scoreLine = homeName + ’ ’ + homeScore + ‘-’ + awayScore + ’ ’ + awayName;
-var hScore = parseInt(homeScore, 10);
-var aScore = parseInt(awayScore, 10);
-var winner = hScore > aScore ? homeName : aScore > hScore ? awayName : null;
-var p1 = scoreLine + ’ — ’ + pick(HIGHLIGHT_PHRASES) + ’ ’ + leagueName + ’ fixture. ’ + (headlines || ‘’);
-var p2 = pick(HIGHLIGHT_RESULT) + ’ ’ + (winner ? winner + ’ showed tremendous quality to secure the three points.’ : ‘Honours were shared after a hard-fought draw.’);
-var p3 = pick(HIGHLIGHT_CTA);
-var text = p1 + ‘\n\n’ + p2.trim() + ‘\n\n’ + p3;
-return text.length > 580 ? text.slice(0, 577) + ‘…’ : text;
+  var scoreLine = homeName + ' ' + homeScore + '-' + awayScore + ' ' + awayName;
+  var hScore = parseInt(homeScore, 10);
+  var aScore = parseInt(awayScore, 10);
+  var winner = hScore > aScore ? homeName : aScore > hScore ? awayName : null;
+  var p1 = scoreLine + ' — ' + pick(HIGHLIGHT_PHRASES) + ' ' + leagueName + ' fixture. ' + (headlines || '');
+  var p2 = pick(HIGHLIGHT_RESULT) + ' ' + (winner ? winner + ' showed tremendous quality to secure the three points.' : 'Honours were shared after a hard-fought draw.');
+  var p3 = pick(HIGHLIGHT_CTA);
+  var text = p1 + '\n\n' + p2.trim() + '\n\n' + p3;
+  return text.length > 580 ? text.slice(0, 577) + '…' : text;
 }
 
 // ─── CONTENT GENERATORS ────────────────────────────────────────────────────
 async function generatePreviewContent(idx) {
-var gd = detectedGames[idx];
-if (!gd) return;
-var c       = getCompetitors(gd);
-var venue   = (gd.espnEvent.competitions && gd.espnEvent.competitions[0] && gd.espnEvent.competitions[0].venue && gd.espnEvent.competitions[0].venue.fullName) || ‘’;
-var rawDate = gd.espnEvent.date ? new Date(gd.espnEvent.date) : null;
-var dateStr = rawDate ? rawDate.toLocaleDateString(‘en-US’, { weekday:‘short’, month:‘short’, day:‘numeric’ }) : ‘’;
-var homeName = (c.home.team && c.home.team.displayName) || ‘?’;
-var awayName = (c.away.team && c.away.team.displayName) || ‘?’;
+  var gd = detectedGames[idx];
+  if (!gd) return;
+  var c       = getCompetitors(gd);
+  var venue   = (gd.espnEvent.competitions && gd.espnEvent.competitions[0] && gd.espnEvent.competitions[0].venue && gd.espnEvent.competitions[0].venue.fullName) || '';
+  var rawDate = gd.espnEvent.date ? new Date(gd.espnEvent.date) : null;
+  var dateStr = rawDate ? rawDate.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' }) : '';
+  var homeName = (c.home.team && c.home.team.displayName) || '?';
+  var awayName = (c.away.team && c.away.team.displayName) || '?';
 
-var thumb = await fetchMatchThumbnail(gd);
-gd.thumbUrl = thumb;
+  var thumb = await fetchMatchThumbnail(gd);
+  gd.thumbUrl = thumb;
 
-var text = generatePreviewText(homeName, awayName, gd.league.name, venue, dateStr);
-gd.preContent = text;
+  var text = generatePreviewText(homeName, awayName, gd.league.name, venue, dateStr);
+  gd.preContent = text;
 
-var el = document.getElementById(‘text-preview-’ + idx);
-if (el) el.innerHTML = ‘<div class="content-text">’ + escHtml(text) + ‘</div>’;
+  var el = document.getElementById('text-preview-' + idx);
+  if (el) el.innerHTML = '<div class="content-text">' + escHtml(text) + '</div>';
 
-var btn = document.querySelector(’#card-’ + idx + ’ [onclick*=“postToBlogger”][onclick*=“preview”]’);
-if (btn) btn.removeAttribute(‘disabled’);
-log(‘ok’, ’\u2713 Content ready: ’ + homeName + ’ vs ’ + awayName);
+  var btn = document.querySelector('#card-' + idx + ' [onclick*="postToBlogger"][onclick*="preview"]');
+  if (btn) btn.removeAttribute('disabled');
+  log('ok', '✓ Content ready: ' + homeName + ' vs ' + awayName);
 }
 
 async function generateHighlightContent(idx) {
-var gd = detectedGames[idx];
-if (!gd) return;
-var c        = getCompetitors(gd);
-var score    = getScore(gd);
-var homeName = (c.home.team && c.home.team.displayName) || ‘?’;
-var awayName = (c.away.team && c.away.team.displayName) || ‘?’;
-var headlines = (gd.espnEvent.competitions && gd.espnEvent.competitions[0] && gd.espnEvent.competitions[0].headlines && gd.espnEvent.competitions[0].headlines[0] && gd.espnEvent.competitions[0].headlines[0].description) || ‘’;
+  var gd = detectedGames[idx];
+  if (!gd) return;
+  var c        = getCompetitors(gd);
+  var score    = getScore(gd);
+  var homeName = (c.home.team && c.home.team.displayName) || '?';
+  var awayName = (c.away.team && c.away.team.displayName) || '?';
+  var headlines = (gd.espnEvent.competitions && gd.espnEvent.competitions[0] && gd.espnEvent.competitions[0].headlines && gd.espnEvent.competitions[0].headlines[0] && gd.espnEvent.competitions[0].headlines[0].description) || '';
 
-var text = generateHighlightText(homeName, awayName, score.home, score.away, gd.league.name, headlines);
-gd.highlightContent = text;
+  var text = generateHighlightText(homeName, awayName, score.home, score.away, gd.league.name, headlines);
+  gd.highlightContent = text;
 
-var el = document.getElementById(‘text-highlights-’ + idx);
-if (el) el.innerHTML = ‘<div class="content-text">’ + escHtml(text) + ‘</div>’;
-log(‘ok’, ’\u2713 Highlights ready: ’ + homeName + ’ vs ’ + awayName);
-renderGames();
+  var el = document.getElementById('text-highlights-' + idx);
+  if (el) el.innerHTML = '<div class="content-text">' + escHtml(text) + '</div>';
+  log('ok', '✓ Highlights ready: ' + homeName + ' vs ' + awayName);
+  renderGames();
 }
 
 async function regenPreview(idx) {
-detectedGames[idx].preContent = null;
-var el = document.getElementById(‘text-preview-’ + idx);
-if (el) el.innerHTML = ‘<div class="content-empty">\u23F3 Regenerating…</div>’;
-await generatePreviewContent(idx);
+  detectedGames[idx].preContent = null;
+  var el = document.getElementById('text-preview-' + idx);
+  if (el) el.innerHTML = '<div class="content-empty">⏳ Regenerating…</div>';
+  await generatePreviewContent(idx);
 }
 
 async function regenHighlights(idx) {
-detectedGames[idx].highlightContent = null;
-var el = document.getElementById(‘text-highlights-’ + idx);
-if (el) el.innerHTML = ‘<div class="content-empty">\u23F3 Regenerating…</div>’;
-await generateHighlightContent(idx);
+  detectedGames[idx].highlightContent = null;
+  var el = document.getElementById('text-highlights-' + idx);
+  if (el) el.innerHTML = '<div class="content-empty">⏳ Regenerating…</div>';
+  await generateHighlightContent(idx);
 }
 
 // ─── THUMBNAIL FETCHER ────────────────────────────────────────────────────
 var LEAGUE_THUMBS = {
-‘soccer/uefa.champions’: ‘https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/UEFA_Champions_League.svg/400px-UEFA_Champions_League.svg.png’,
-‘soccer/eng.1’:          ‘https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Premier_League.svg/400px-Premier_League.svg.png’,
-‘soccer/esp.1’:          ‘https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/LaLiga_2023_Horizontal_Logo.svg/400px-LaLiga_2023_Horizontal_Logo.svg.png’,
-‘soccer/ita.1’:          ‘https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Serie_A_Made_in_Italy_logo.svg/400px-Serie_A_Made_in_Italy_logo.svg.png’,
-‘soccer/ger.1’:          ‘https://upload.wikimedia.org/wikinews/en/thumb/1/15/Bundesliga_logo.svg/400px-Bundesliga_logo.svg.png’,
-‘soccer/fra.1’:          ‘https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Ligue_1_McDonald%27s_logo.svg/400px-Ligue_1_McDonald%27s_logo.svg.png’,
-‘basketball/nba’:        ‘https://upload.wikimedia.org/wikipedia/commons/thumb/7/76/NBA_logo.svg/400px-NBA_logo.svg.png’,
-‘racing/f1’:             ‘https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/F1.svg/400px-F1.svg.png’,
-‘soccer/eng.fa’:         ‘https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/FA_Cup.svg/400px-FA_Cup.svg.png’,
+  'soccer/uefa.champions': 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/UEFA_Champions_League.svg/400px-UEFA_Champions_League.svg.png',
+  'soccer/eng.1':          'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Premier_League.svg/400px-Premier_League.svg.png',
+  'soccer/esp.1':          'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/LaLiga_2023_Horizontal_Logo.svg/400px-LaLiga_2023_Horizontal_Logo.svg.png',
+  'soccer/ita.1':          'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Serie_A_Made_in_Italy_logo.svg/400px-Serie_A_Made_in_Italy_logo.svg.png',
+  'soccer/ger.1':          'https://upload.wikimedia.org/wikinews/en/thumb/1/15/Bundesliga_logo.svg/400px-Bundesliga_logo.svg.png',
+  'soccer/fra.1':          'https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Ligue_1_McDonald%27s_logo.svg/400px-Ligue_1_McDonald%27s_logo.svg.png',
+  'basketball/nba':        'https://upload.wikimedia.org/wikipedia/commons/thumb/7/76/NBA_logo.svg/400px-NBA_logo.svg.png',
+  'racing/f1':             'https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/F1.svg/400px-F1.svg.png',
+  'soccer/eng.fa':         'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/FA_Cup.svg/400px-FA_Cup.svg.png',
 };
 
 async function fetchMatchThumbnail(gd) {
-var c = getCompetitors(gd);
-// 1. ESPN team logo
-var espnLogo = (c.home.team && c.home.team.logo) || null;
-if (espnLogo) return espnLogo;
+  var c = getCompetitors(gd);
+  // 1. ESPN team logo
+  var espnLogo = (c.home.team && c.home.team.logo) || null;
+  if (espnLogo) return espnLogo;
 
-// 2. TheSportsDB
-var teamName = (c.home.team && c.home.team.displayName) || ‘’;
-if (teamName) {
-try {
-var controller = new AbortController();
-setTimeout(function(){ controller.abort(); }, 4000);
-var r = await fetch(‘https://www.thesportsdb.com/api/v1/json/3/searchteams.php?t=’ + encodeURIComponent(teamName), { signal: controller.signal });
-var d = await r.json();
-var badge = (d.teams && d.teams[0] && (d.teams[0].strTeamBadge || d.teams[0].strTeamFanart1)) || null;
-if (badge) return badge;
-} catch(e) {}
-}
+  // 2. TheSportsDB
+  var teamName = (c.home.team && c.home.team.displayName) || '';
+  if (teamName) {
+    try {
+      var controller = new AbortController();
+      setTimeout(function(){ controller.abort(); }, 4000);
+      var r = await fetch('https://www.thesportsdb.com/api/v1/json/3/searchteams.php?t=' + encodeURIComponent(teamName), { signal: controller.signal });
+      var d = await r.json();
+      var badge = (d.teams && d.teams[0] && (d.teams[0].strTeamBadge || d.teams[0].strTeamFanart1)) || null;
+      if (badge) return badge;
+    } catch(e) {}
+  }
 
-// 3. League fallback
-return LEAGUE_THUMBS[gd.league.id] || null;
+  // 3. League fallback
+  return LEAGUE_THUMBS[gd.league.id] || null;
 }
 
 // Build post title with vs or x format
 function buildPostTitle(homeName, awayName, type, score, leagueName) {
-var sep = Math.random() > 0.5 ? ’ vs ’ : ’ x ‘;
-if (type === ‘preview’) {
-return homeName + sep + awayName + ’ - Free Live Stream | ’ + leagueName + ’ | Sports 803’;
-}
-return homeName + ’ ’ + score.home + ‘-’ + score.away + ’ ’ + awayName + ’ Highlights | ’ + leagueName + ’ | Sports 803’;
+  var sep = Math.random() > 0.5 ? ' vs ' : ' x ';
+  if (type === 'preview') {
+    return homeName + sep + awayName + ' - Free Live Stream | ' + leagueName + ' | Sports 803';
+  }
+  return homeName + ' ' + score.home + '-' + score.away + ' ' + awayName + ' Highlights | ' + leagueName + ' | Sports 803';
 }
 
 // ─── BLOGGER API ───────────────────────────────────────────────────────────
 async function postToBlogger(idx, type) {
-var gd      = detectedGames[idx];
-var btn     = event.currentTarget;
-var blogId  = document.getElementById(‘blog-id’).value.trim();
-var pubMode = document.getElementById(‘publish-mode’).value;
+  var gd      = detectedGames[idx];
+  var btn     = event.currentTarget;
+  var blogId  = document.getElementById('blog-id').value.trim();
+  var pubMode = document.getElementById('publish-mode').value;
 
-// Check OAuth token
-if (!oauthToken || Date.now() >= tokenExpiresAt) {
-toast(‘Please sign in with Google first’, ‘err’);
-log(‘err’, ‘Not signed in — click Sign in with Google’);
-return;
-}
-if (!blogId) { toast(‘Enter your Blog ID first’, ‘err’); return; }
+  // Check OAuth token
+  if (!oauthToken || Date.now() >= tokenExpiresAt) {
+    toast('Please sign in with Google first', 'err');
+    log('err', 'Not signed in — click Sign in with Google');
+    return;
+  }
+  if (!blogId) { toast('Enter your Blog ID first', 'err'); return; }
 
-var postContent = type === ‘preview’ ? gd.preContent : gd.highlightContent;
-if (!postContent) { toast(‘No content to post yet’, ‘err’); return; }
+  var postContent = type === 'preview' ? gd.preContent : gd.highlightContent;
+  if (!postContent) { toast('No content to post yet', 'err'); return; }
 
-btn.classList.add(‘loading’); btn.disabled = true;
+  btn.classList.add('loading'); btn.disabled = true;
 
-var c        = getCompetitors(gd);
-var score    = getScore(gd);
-var homeName = (c.home.team && c.home.team.displayName) || ‘?’;
-var awayName = (c.away.team && c.away.team.displayName) || ‘?’;
-var title    = buildPostTitle(homeName, awayName, type, score, gd.league.name);
+  var c        = getCompetitors(gd);
+  var score    = getScore(gd);
+  var homeName = (c.home.team && c.home.team.displayName) || '?';
+  var awayName = (c.away.team && c.away.team.displayName) || '?';
+  var title    = buildPostTitle(homeName, awayName, type, score, gd.league.name);
 
-// Get iframe src from the input field
-var iframeSrcEl = document.getElementById(‘iframe-src-’ + idx);
-var iframeSrc   = iframeSrcEl ? iframeSrcEl.value.trim() : ‘’;
+  // Get iframe src from the input field
+  var iframeSrcEl = document.getElementById('iframe-src-' + idx);
+  var iframeSrc   = iframeSrcEl ? iframeSrcEl.value.trim() : '';
 
-var thumbImg = gd.thumbUrl
-? ‘<div style="text-align:center;margin-bottom:18px;"><a href="https://alvinalexa.github.io/Todays-Events/" target="_blank"><img src="' + gd.thumbUrl + '" alt="' + title + '" style="max-width:100%;height:auto;border-radius:8px;" /></a></div>’
-: ‘’;
+  var thumbImg = gd.thumbUrl
+    ? '<div style="text-align:center;margin-bottom:18px;"><a href="https://alvinalexa.github.io/Todays-Events/" target="_blank"><img src="' + gd.thumbUrl + '" alt="' + title + '" style="max-width:100%;height:auto;border-radius:8px;" /></a></div>'
+    : '';
 
-var iframeHtml = iframeSrc
-? ‘<div style="margin:18px 0;">\n’
-+ ’<iframe loading=“lazy” class=“video-iframe” name=“search_iframe” ’
-+ ’sandbox=“allow-forms allow-pointer-lock allow-same-origin allow-scripts allow-top-navigation” ’
-+ ’allow=“encrypted-media” width=“100%” height=“500” ’
-+ ‘src=”’ + iframeSrc + ’” ’
-+ ‘frameborder=“0” scrolling=“no” allowfullscreen=“allowfullscreen”></iframe>\n’
-+ ‘</div>’
-: ‘’;
+  var iframeHtml = iframeSrc
+    ? '<div style="margin:18px 0;">\n'
+      + '<iframe loading="lazy" class="video-iframe" name="search_iframe" '
+      + 'sandbox="allow-forms allow-pointer-lock allow-same-origin allow-scripts allow-top-navigation" '
+      + 'allow="encrypted-media" width="100%" height="500" '
+      + 'src="' + iframeSrc + '" '
+      + 'frameborder="0" scrolling="no" allowfullscreen="allowfullscreen"></iframe>\n'
+      + '</div>'
+    : '';
 
-var paragraphs = postContent.split(’\n\n’).filter(function(p){ return p.trim(); });
-var bodyHtml = paragraphs.map(function(p){ return ‘<p>’ + p.trim() + ‘</p>’; }).join(’\n’);
+  var paragraphs = postContent.split('\n\n').filter(function(p){ return p.trim(); });
+  var bodyHtml = paragraphs.map(function(p){ return '<p>' + p.trim() + '</p>'; }).join('\n');
 
-var htmlContent = ‘<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.8;color:#333;">\n’
-+ thumbImg + ‘\n’
-+ bodyHtml + ‘\n’
-+ iframeHtml + ‘\n’
-+ ‘<p>\u{1F4FA} <strong>Watch Live Free on Sports 803</strong></p>\n’
-+ ‘</div>’;
+  var htmlContent = '<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.8;color:#333;">\n'
+    + thumbImg + '\n'
+    + bodyHtml + '\n'
+    + iframeHtml + '\n'
+    + '<p>📺 <strong>Watch Live Free on Sports 803</strong></p>\n'
+    + '</div>';
 
-var labels = [gd.league.label, ‘sports 803’, type === ‘highlights’ ? ‘highlights’ : ‘live stream’];
+  var labels = [gd.league.label, 'sports 803', type === 'highlights' ? 'highlights' : 'live stream'];
 
-try {
-var method = ‘POST’;
-var url    = ‘https://www.googleapis.com/blogger/v3/blogs/’ + blogId + ‘/posts/?isDraft=’ + (pubMode === ‘DRAFT’ ? ‘true’ : ‘false’);
-var body   = { title: title, content: htmlContent, labels: labels };
+  try {
+    var method = 'POST';
+    var url    = 'https://www.googleapis.com/blogger/v3/blogs/' + blogId + '/posts/?isDraft=' + (pubMode === 'DRAFT' ? 'true' : 'false');
+    var body   = { title: title, content: htmlContent, labels: labels };
 
-```
-if (type === 'highlights' && gd.blogPostId) {
-  method  = 'PUT';
-  url     = 'https://www.googleapis.com/blogger/v3/blogs/' + blogId + '/posts/' + gd.blogPostId;
-  body.id = gd.blogPostId;
-}
+    if (type === 'highlights' && gd.blogPostId) {
+      method  = 'PUT';
+      url     = 'https://www.googleapis.com/blogger/v3/blogs/' + blogId + '/posts/' + gd.blogPostId;
+      body.id = gd.blogPostId;
+    }
 
-var r = await fetch(url, {
-  method: method,
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': 'Bearer ' + oauthToken,
-  },
-  body: JSON.stringify(body),
-});
+    var r = await fetch(url, {
+      method: method,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + oauthToken,
+      },
+      body: JSON.stringify(body),
+    });
 
-if (!r.ok) {
-  var err = await r.json().catch(function(){ return {}; });
-  throw new Error((err.error && err.error.message) || 'Blogger API ' + r.status);
-}
+    if (!r.ok) {
+      var err = await r.json().catch(function(){ return {}; });
+      throw new Error((err.error && err.error.message) || 'Blogger API ' + r.status);
+    }
 
-var data = await r.json();
-if (type === 'preview') {
-  gd.blogPostId = data.id;
-  gd.status = pubMode === 'DRAFT' ? 'draft' : 'posted';
-} else {
-  gd.status = 'updated';
-}
+    var data = await r.json();
+    if (type === 'preview') {
+      gd.blogPostId = data.id;
+      gd.status = pubMode === 'DRAFT' ? 'draft' : 'posted';
+    } else {
+      gd.status = 'updated';
+    }
 
-renderGames();
-toast('\u2713 ' + (type === 'preview' ? 'Preview' : 'Highlights') + ' ' + (pubMode === 'DRAFT' ? 'saved as draft' : 'published') + '!', 'ok');
-log('ok', '\u2713 ' + (pubMode === 'DRAFT' ? 'Draft saved' : 'Published') + ': "' + title + '"');
-```
+    renderGames();
+    toast('✓ ' + (type === 'preview' ? 'Preview' : 'Highlights') + ' ' + (pubMode === 'DRAFT' ? 'saved as draft' : 'published') + '!', 'ok');
+    log('ok', '✓ ' + (pubMode === 'DRAFT' ? 'Draft saved' : 'Published') + ': "' + title + '"');
 
-} catch(e) {
-toast(’Post failed: ’ + e.message, ‘err’);
-log(‘err’, ’Blogger error: ’ + e.message);
-}
+  } catch(e) {
+    toast('Post failed: ' + e.message, 'err');
+    log('err', 'Blogger error: ' + e.message);
+  }
 
-btn.classList.remove(‘loading’); btn.disabled = false;
+  btn.classList.remove('loading'); btn.disabled = false;
 }
 
 // ─── LOG ───────────────────────────────────────────────────────────────────
 function log(type, msg) {
-var panel = document.getElementById(‘log-panel’);
-var ts    = new Date().toLocaleTimeString(‘en-US’, { hour:‘2-digit’, minute:‘2-digit’, second:‘2-digit’ });
-var line  = document.createElement(‘div’);
-line.className = ’log-line ’ + type;
-line.innerHTML = ‘<span class="ts">’ + ts + ‘</span><span class="msg">’ + msg + ‘</span>’;
-panel.appendChild(line);
-panel.scrollTop = panel.scrollHeight;
-} 
+  var panel = document.getElementById('log-panel');
+  var ts    = new Date().toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  var line  = document.createElement('div');
+  line.className = 'log-line ' + type;
+  line.innerHTML = '<span class="ts">' + ts + '</span><span class="msg">' + msg + '</span>';
+  panel.appendChild(line);
+  panel.scrollTop = panel.scrollHeight;
+}
 
 // ─── TOAST ─────────────────────────────────────────────────────────────────
 var toastTimer;
 function toast(msg, type) {
-var t = document.getElementById(‘toast’);
-t.textContent = msg;
-t.className = ‘toast ’ + (type || ‘ok’) + ’ show’;
-clearTimeout(toastTimer);
-toastTimer = setTimeout(function(){ t.classList.remove(‘show’); }, 3000);
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + (type || 'ok') + ' show';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 3000);
 }
 
 // ─── UTILS ─────────────────────────────────────────────────────────────────
 function escHtml(s) {
-return (s || ‘’).replace(/&/g,’&’).replace(/</g,’<’).replace(/>/g,’>’);
+  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 </script>
 
 </body>
 </html>
+```
+
+Key changes made:
+
+· Replaced the old OAuth code with the v5.5 style (fixed client ID, token client, handleAuth()).
+· Updated the HTML to use the same sign‑in button and signed‑in block as the v2 dashboard.
+· Added token restoration in loadConfig() and token saving in saveConfig().
+· Kept all other functionality (league scanning, content generation, posting) exactly as before.
+
+Now your third dashboard has the same clean Google login experience as the v5.5 and v2 dashboards.
