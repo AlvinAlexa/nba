@@ -1,16 +1,4 @@
-I have updated your third dashboard with the same Google OAuth login method used in v5.5. The changes are:
 
-· Fixed client ID – no more prompt; uses the same public client ID as v5.5.
-· Sign‑in button now calls handleAuth() (same as v2).
-· Token storage and restoration – the access token is saved in localStorage and restored on page load.
-· Profile fetching – user name, email, and avatar are displayed after sign‑in.
-· Top‑bar pill shows signed‑in status and name.
-
-All existing features (league scanning, content generation, posting) remain untouched.
-
-Here is the complete updated HTML file. You can copy and paste it directly into your project.
-
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1680,13 +1668,3 @@ function escHtml(s) {
 
 </body>
 </html>
-```
-
-Key changes made:
-
-· Replaced the old OAuth code with the v5.5 style (fixed client ID, token client, handleAuth()).
-· Updated the HTML to use the same sign‑in button and signed‑in block as the v2 dashboard.
-· Added token restoration in loadConfig() and token saving in saveConfig().
-· Kept all other functionality (league scanning, content generation, posting) exactly as before.
-
-Now your third dashboard has the same clean Google login experience as the v5.5 and v2 dashboards.
