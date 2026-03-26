@@ -1162,101 +1162,7 @@ select option { background: #141720; }
 
 <script>
 
-  // ========== THESPORTSDB EVENT FETCHER ==========
-const TSDB_BASE = 'https://www.thesportsdb.com/api/v1/json/3';
-let tsdbCache = {};
 
-async function fetchTSDBEvents(league, targetDate) {
-  if (!league.tsdbId) return [];
-  const cacheKey = `${league.tsdbId}_${targetDate}`;
-  if (tsdbCache[cacheKey]) return tsdbCache[cacheKey];
-
-  const url = `${TSDB_BASE}/eventsseason.php?id=${league.tsdbId}`;
-  try {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`TSDB HTTP ${res.status}`);
-    const data = await res.json();
-    const events = data.events || [];
-
-    const filtered = events.filter(ev => {
-      if (!ev.strTimestamp) return false;
-      const eventDate = ev.strTimestamp.substring(0, 10);
-      return eventDate === targetDate;
-    });
-
-    const converted = filtered.map(ev => ({
-      id: ev.idEvent,
-      name: ev.strEvent,
-      date: ev.strTimestamp,
-      status: {
-        type: {
-          state: ev.strStatus === 'FT' ? 'post' : (ev.strStatus === 'In Progress' ? 'in' : 'pre'),
-          shortDetail: ev.strStatus || ''
-        }
-      },
-      competitions: [{
-        competitors: [
-          {
-            homeAway: 'home',
-            team: { displayName: ev.strHomeTeam, logo: ev.strHomeTeamBadge || '' },
-            score: ev.intHomeScore || ''
-          },
-          {
-            homeAway: 'away',
-            team: { displayName: ev.strAwayTeam, logo: ev.strAwayTeamBadge || '' },
-            score: ev.intAwayScore || ''
-          }
-        ],
-        venue: { fullName: ev.strVenue || '' },
-        headlines: []
-      }]
-    }));
-
-    tsdbCache[cacheKey] = converted;
-    return converted;
-  } catch(e) {
-    console.warn(`TSDB fetch failed for ${league.name}:`, e);
-    return [];
-  }
-}
-
-// Integrate into scanAllLeagues (if not already overridden)
-if (typeof scanAllLeagues === 'function') {
-  const originalScan = scanAllLeagues;
-  window.scanAllLeagues = async function() {
-    await originalScan();
-    const selected = LEAGUES.filter(l => !l.espn && activeLeagues.has(l.id));
-    if (!selected.length) return;
-    const targetDate = selectedDate || new Date().toISOString().slice(0,10);
-    for (const league of selected) {
-      const events = await fetchTSDBEvents(league, targetDate);
-      for (const ev of events) {
-        detectedGames.push({
-          espnEvent: ev,
-          league: league,
-          preContent: null,
-          highlightContent: null,
-          blogPostId: null,
-          status: 'idle',
-          thumbUrl: null,
-          isManual: false,
-          customLabels: [],
-          customTitle: null,
-          scheduledPosted: false,
-          gameDate: targetDate,
-          iframeSrc: ''
-        });
-      }
-      if (events.length) log('ok', `✓ ${league.name}: ${events.length} event(s) from TheSportsDB`);
-    }
-    if (typeof renderGames === 'function') renderGames();
-    for (let i = 0; i < detectedGames.length; i++) {
-      if (!detectedGames[i].preContent && typeof generatePreviewContent === 'function') {
-        await generatePreviewContent(i);
-      }
-    }
-  };
-}
 // ─── CONFIG ────────────────────────────────────────────────────────────────
 const LEAGUES = [
   // ── FOOTBALL (UEFA / domestic) ──
@@ -3448,7 +3354,144 @@ if (typeof regenThumbnail === 'function') {
 // The thumb tab already gets a button from the override above, but ensure it's there.
 
 console.log('✅ Complete thumbnail integration active');
+// ========== SAFE THESPORTSDB INTEGRATION ==========
+(function() {
+  // Wait for the main dashboard to be ready
+  function initTSDB() {
+    // Check if required global functions exist
+    if (typeof LEAGUES === 'undefined' || typeof activeLeagues === 'undefined' || typeof detectedGames === 'undefined') {
+      console.log('Waiting for dashboard to load...');
+      setTimeout(initTSDB, 500);
+      return;
+    }
 
+    const TSDB_BASE = 'https://www.thesportsdb.com/api/v1/json/3';
+    let tsdbCache = {};
+
+    // Helper: fetch events from TheSportsDB
+    async function fetchTSDBEvents(league, targetDate) {
+      if (!league.tsdbId) return [];
+      const cacheKey = `${league.tsdbId}_${targetDate}`;
+      if (tsdbCache[cacheKey]) return tsdbCache[cacheKey];
+
+      const url = `${TSDB_BASE}/eventsseason.php?id=${league.tsdbId}`;
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`TSDB HTTP ${res.status}`);
+        const data = await res.json();
+        const events = data.events || [];
+
+        // Filter by exact date
+        const filtered = events.filter(ev => {
+          if (!ev.strTimestamp) return false;
+          const eventDate = ev.strTimestamp.substring(0, 10);
+          return eventDate === targetDate;
+        });
+
+        // Convert to internal format (same as ESPN events)
+        const converted = filtered.map(ev => ({
+          id: ev.idEvent,
+          name: ev.strEvent,
+          date: ev.strTimestamp,
+          status: {
+            type: {
+              state: ev.strStatus === 'FT' ? 'post' : (ev.strStatus === 'In Progress' ? 'in' : 'pre'),
+              shortDetail: ev.strStatus || ''
+            }
+          },
+          competitions: [{
+            competitors: [
+              {
+                homeAway: 'home',
+                team: { displayName: ev.strHomeTeam, logo: ev.strHomeTeamBadge || '' },
+                score: ev.intHomeScore || ''
+              },
+              {
+                homeAway: 'away',
+                team: { displayName: ev.strAwayTeam, logo: ev.strAwayTeamBadge || '' },
+                score: ev.intAwayScore || ''
+              }
+            ],
+            venue: { fullName: ev.strVenue || '' },
+            headlines: []
+          }]
+        }));
+
+        tsdbCache[cacheKey] = converted;
+        return converted;
+      } catch(e) {
+        console.warn(`TSDB fetch failed for ${league.name}:`, e);
+        return [];
+      }
+    }
+
+    // Store original scanAllLeagues
+    const originalScan = window.scanAllLeagues;
+    if (!originalScan) {
+      console.warn('scanAllLeagues not found – cannot add TSDB events.');
+      return;
+    }
+
+    // Override safely
+    window.scanAllLeagues = async function() {
+      // 1. Run original scan (ESPN leagues)
+      await originalScan();
+
+      // 2. Fetch TSDB events for non‑ESPN leagues
+      const selected = LEAGUES.filter(l => !l.espn && activeLeagues.has(l.id));
+      if (!selected.length) return;
+
+      const targetDate = typeof selectedDate !== 'undefined' ? selectedDate : new Date().toISOString().slice(0,10);
+      for (const league of selected) {
+        try {
+          const events = await fetchTSDBEvents(league, targetDate);
+          for (const ev of events) {
+            detectedGames.push({
+              espnEvent: ev,
+              league: league,
+              preContent: null,
+              highlightContent: null,
+              blogPostId: null,
+              status: 'idle',
+              thumbUrl: null,
+              isManual: false,
+              customLabels: [],
+              customTitle: null,
+              scheduledPosted: false,
+              gameDate: targetDate,
+              iframeSrc: ''
+            });
+          }
+          if (events.length && typeof log === 'function') {
+            log('ok', `✓ ${league.name}: ${events.length} event(s) from TheSportsDB`);
+          } else if (typeof log === 'function') {
+            log('info', `ℹ ${league.name}: no events on ${targetDate}`);
+          }
+        } catch(e) {
+          if (typeof log === 'function') log('err', `✗ ${league.name} (TSDB): ${e.message}`);
+        }
+      }
+
+      // 3. Re‑render and generate content for all games (including new ones)
+      if (typeof renderGames === 'function') renderGames();
+      if (typeof updateAllStats === 'function') updateAllStats();
+      for (let i = 0; i < detectedGames.length; i++) {
+        if (!detectedGames[i].preContent && typeof generatePreviewContent === 'function') {
+          await generatePreviewContent(i);
+        }
+      }
+    };
+
+    console.log('✅ TheSportsDB integration active');
+  }
+
+  // Start the process after page load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initTSDB);
+  } else {
+    initTSDB();
+  }
+})();
 
 </script>
 
