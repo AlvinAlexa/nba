@@ -1163,38 +1163,64 @@ select option { background: #141720; }
 <script>
 // ─── CONFIG ────────────────────────────────────────────────────────────────
 const LEAGUES = [
-  // ── FOOTBALL ──
+  // ── FOOTBALL (UEFA / domestic) ──
   { id: 'soccer/uefa.champions', name: 'UCL',          emoji: '🏆', label: 'champions league', espn: true },
+  { id: 'soccer/uefa.europa',    name: 'Europa Lg',    emoji: '🟠', label: 'europa league',     espn: true },
+  { id: 'soccer/uefa.europa.conf', name: 'Conf Lg',    emoji: '🔵', label: 'conference league', espn: true },
   { id: 'soccer/eng.1',          name: 'Premier Lg',   emoji: '⚽',  label: 'premier league',   espn: true },
   { id: 'soccer/esp.1',          name: 'La Liga',      emoji: '⚽',  label: 'la liga',           espn: true },
   { id: 'soccer/ita.1',          name: 'Serie A',      emoji: '⚽',  label: 'serie a',           espn: true },
   { id: 'soccer/ger.1',          name: 'Bundesliga',   emoji: '⚽',  label: 'bundesliga',        espn: true },
   { id: 'soccer/fra.1',          name: 'Ligue 1',      emoji: '⚽',  label: 'ligue 1',           espn: true },
-  { id: 'soccer/uefa.europa',    name: 'Europa Lg',    emoji: '🟠',  label: 'europa league',     espn: true },
-  { id: 'soccer/eng.fa',         name: 'FA Cup',       emoji: '⚽',  label: 'fa cup',            espn: true },
-  { id: 'soccer/usa.1',          name: 'MLS',          emoji: '⚽',  label: 'mls',               espn: true },
-  { id: 'soccer/tur.1',          name: 'Super Lig',    emoji: '⚽',  label: 'turkish',           espn: true },
+  { id: 'soccer/ned.1',          name: 'Eredivisie',   emoji: '⚽',  label: 'eredivisie',        espn: true },
+  { id: 'soccer/sco.1',          name: 'Scottish Prem',emoji: '🏴󠁧󠁢󠁳󠁣󠁴󠁿', label: 'scottish premiership', espn: true },
+  { id: 'soccer/por.1',          name: 'Primeira Liga',emoji: '🇵🇹', label: 'primeira liga',      espn: true },
+  { id: 'soccer/bra.1',          name: 'Brasileirão',  emoji: '🇧🇷', label: 'brasileirao',        espn: true },
+  { id: 'soccer/mex.1',          name: 'Liga MX',      emoji: '🇲🇽', label: 'liga mx',            espn: true },
+  { id: 'soccer/eng.fa',         name: 'FA Cup',       emoji: '⚽',  label: 'fa cup',             espn: true },
+  { id: 'soccer/usa.1',          name: 'MLS',          emoji: '⚽',  label: 'mls',                espn: true },
+  { id: 'soccer/tur.1',          name: 'Super Lig',    emoji: '⚽',  label: 'turkish',            espn: true },
+
+  // ── INTERNATIONAL FOOTBALL ──
+  { id: 'soccer/afcon',          name: 'AFCON',        emoji: '🏆',  label: 'afcon',              espn: false, tsdbId: 4387 },
+  { id: 'soccer/copaamerica',    name: 'Copa América', emoji: '🌎',  label: 'copa america',       espn: false, tsdbId: 4376 },
+  { id: 'soccer/euro',           name: 'UEFA Euro',    emoji: '🏆',  label: 'euro championship',  espn: false, tsdbId: 4481 },
+  { id: 'soccer/nationsleague',  name: 'Nations Lg',   emoji: '🏆',  label: 'nations league',    espn: false, tsdbId: 4482 },
+  { id: 'soccer/worldcupq',      name: 'WC Qualifiers',emoji: '🌍',  label: 'world cup qualifiers', espn: false, tsdbId: 4401 },
+  { id: 'soccer/intlfriendly',   name: 'Intl Friendlies', emoji: '🤝', label: 'international friendlies', espn: false, tsdbId: 4411 },
+
   // ── BASKETBALL ──
-  { id: 'basketball/nba',        name: 'NBA',          emoji: '🏀',  label: 'nba',               espn: true },
+  { id: 'basketball/nba',        name: 'NBA',          emoji: '🏀',  label: 'nba',                espn: true },
+  { id: 'basketball/euroleague', name: 'EuroLeague',   emoji: '🏀',  label: 'euroleague',        espn: false, tsdbId: 4480 },
+
   // ── AMERICAN FOOTBALL ──
-  { id: 'football/nfl',          name: 'NFL',          emoji: '🏈',  label: 'nfl',               espn: true },
+  { id: 'football/nfl',          name: 'NFL',          emoji: '🏈',  label: 'nfl',                espn: true },
+
   // ── ICE HOCKEY ──
-  { id: 'hockey/nhl',            name: 'NHL / Ice Hockey', emoji: '🏒', label: 'ice hockey',   espn: true },
+  { id: 'hockey/nhl',            name: 'NHL',          emoji: '🏒',  label: 'ice hockey',        espn: true },
+
   // ── MOTORSPORT ──
-  { id: 'racing/f1',             name: 'Formula 1',    emoji: '🏎',  label: 'f1',                espn: true },
-  { id: 'racing/motogp',         name: 'MotoGP',       emoji: '🏍',  label: 'motogp',            espn: false },
-  { id: 'racing/indycar',        name: 'IndyCar',      emoji: '🏎',  label: 'indycar',           espn: false },
-  { id: 'racing/lemans',         name: 'Le Mans / WEC',emoji: '🏎',  label: 'le mans',           espn: false },
+  { id: 'racing/f1',             name: 'Formula 1',    emoji: '🏎️', label: 'formula 1',         espn: false, tsdbId: 4388 },
+  { id: 'racing/motogp',         name: 'MotoGP',       emoji: '🏍️', label: 'motogp',             espn: false, tsdbId: 4410 },
+  { id: 'racing/indycar',        name: 'IndyCar',      emoji: '🏎️', label: 'indycar',            espn: false, tsdbId: 4420 },
+  { id: 'racing/nascar',         name: 'NASCAR',       emoji: '🚗',  label: 'nascar',             espn: false, tsdbId: 4430 },
+  { id: 'racing/lemans',         name: 'Le Mans / WEC',emoji: '🏎️', label: 'le mans',            espn: false, tsdbId: 4440 },
+
   // ── COMBAT SPORTS ──
-  { id: 'mma/ufc',               name: 'UFC / MMA',    emoji: '🥊',  label: 'ufc',               espn: false },
-  { id: 'boxing/wbc',            name: 'Boxing',       emoji: '🥊',  label: 'boxing',            espn: false },
-  { id: 'wrestling/wwe',         name: 'WWE',          emoji: '🤼',  label: 'wwe',               espn: false },
+  { id: 'mma/ufc',               name: 'UFC / MMA',    emoji: '🥊',  label: 'ufc',                espn: false, tsdbId: 4470 },
+  { id: 'boxing/wbc',            name: 'Boxing',       emoji: '🥊',  label: 'boxing',             espn: false, tsdbId: 4443 },
+  { id: 'wrestling/wwe',         name: 'WWE',          emoji: '🤼',  label: 'wwe',                espn: false, tsdbId: 4478 },
+
   // ── TENNIS ──
-  { id: 'tennis/atp',            name: 'Tennis',       emoji: '🎾',  label: 'tennis',            espn: false },
-  // ── CYCLING ──
-  { id: 'cycling/road',          name: 'Cycling',      emoji: '🚴',  label: 'cycling',           espn: false },
-  // ── CRICKET ──
-  { id: 'cricket/icc',           name: 'Cricket',      emoji: '🏏',  label: 'cricket',           espn: false },
+  { id: 'tennis/atp',            name: 'ATP Tennis',   emoji: '🎾',  label: 'tennis',             espn: false, tsdbId: 4450 },
+  { id: 'tennis/wta',            name: 'WTA Tennis',   emoji: '🎾',  label: 'wta tennis',         espn: false, tsdbId: 4451 },
+
+  // ── OTHER SPORTS ──
+  { id: 'cycling/road',          name: 'Cycling',      emoji: '🚴',  label: 'cycling',            espn: false, tsdbId: 4471 },
+  { id: 'cricket/icc',           name: 'Cricket',      emoji: '🏏',  label: 'cricket',            espn: false, tsdbId: 4460 },
+  { id: 'rugby/union',           name: 'Rugby Union',  emoji: '🏉',  label: 'rugby union',        espn: false, tsdbId: 4475 },
+  { id: 'snooker/wst',           name: 'Snooker',      emoji: '🎱',  label: 'snooker',            espn: false, tsdbId: 4508 },
+  { id: 'darts/pdc',             name: 'Darts',        emoji: '🎯',  label: 'darts',              espn: false, tsdbId: 4501 },
 ];
 
 const DEFAULT_ACTIVE = ['soccer/uefa.champions','soccer/eng.1','soccer/esp.1','soccer/ita.1','soccer/ger.1','racing/f1','basketball/nba','mma/ufc','tennis/atp'];
@@ -3327,7 +3353,101 @@ if (typeof regenThumbnail === 'function') {
 
 console.log('✅ Complete thumbnail integration active');
 
+// ========== THESPORTSDB EVENT FETCHER ==========
+const TSDB_BASE = 'https://www.thesportsdb.com/api/v1/json/3';
+let tsdbCache = {};
 
+async function fetchTSDBEvents(league, targetDate) {
+  if (!league.tsdbId) return [];
+  const cacheKey = `${league.tsdbId}_${targetDate}`;
+  if (tsdbCache[cacheKey]) return tsdbCache[cacheKey];
+
+  const url = `${TSDB_BASE}/eventsseason.php?id=${league.tsdbId}`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`TSDB HTTP ${res.status}`);
+    const data = await res.json();
+    const events = data.events || [];
+
+    const filtered = events.filter(ev => {
+      if (!ev.strTimestamp) return false;
+      const eventDate = ev.strTimestamp.substring(0, 10);
+      return eventDate === targetDate;
+    });
+
+    const converted = filtered.map(ev => ({
+      id: ev.idEvent,
+      name: ev.strEvent,
+      date: ev.strTimestamp,
+      status: {
+        type: {
+          state: ev.strStatus === 'FT' ? 'post' : (ev.strStatus === 'In Progress' ? 'in' : 'pre'),
+          shortDetail: ev.strStatus || ''
+        }
+      },
+      competitions: [{
+        competitors: [
+          {
+            homeAway: 'home',
+            team: { displayName: ev.strHomeTeam, logo: ev.strHomeTeamBadge || '' },
+            score: ev.intHomeScore || ''
+          },
+          {
+            homeAway: 'away',
+            team: { displayName: ev.strAwayTeam, logo: ev.strAwayTeamBadge || '' },
+            score: ev.intAwayScore || ''
+          }
+        ],
+        venue: { fullName: ev.strVenue || '' },
+        headlines: []
+      }]
+    }));
+
+    tsdbCache[cacheKey] = converted;
+    return converted;
+  } catch(e) {
+    console.warn(`TSDB fetch failed for ${league.name}:`, e);
+    return [];
+  }
+}
+
+// Integrate into scanAllLeagues (if not already overridden)
+if (typeof scanAllLeagues === 'function') {
+  const originalScan = scanAllLeagues;
+  window.scanAllLeagues = async function() {
+    await originalScan();
+    const selected = LEAGUES.filter(l => !l.espn && activeLeagues.has(l.id));
+    if (!selected.length) return;
+    const targetDate = selectedDate || new Date().toISOString().slice(0,10);
+    for (const league of selected) {
+      const events = await fetchTSDBEvents(league, targetDate);
+      for (const ev of events) {
+        detectedGames.push({
+          espnEvent: ev,
+          league: league,
+          preContent: null,
+          highlightContent: null,
+          blogPostId: null,
+          status: 'idle',
+          thumbUrl: null,
+          isManual: false,
+          customLabels: [],
+          customTitle: null,
+          scheduledPosted: false,
+          gameDate: targetDate,
+          iframeSrc: ''
+        });
+      }
+      if (events.length) log('ok', `✓ ${league.name}: ${events.length} event(s) from TheSportsDB`);
+    }
+    if (typeof renderGames === 'function') renderGames();
+    for (let i = 0; i < detectedGames.length; i++) {
+      if (!detectedGames[i].preContent && typeof generatePreviewContent === 'function') {
+        await generatePreviewContent(i);
+      }
+    }
+  };
+}
 </script>
 
 </body>
