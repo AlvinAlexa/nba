@@ -7,6 +7,114 @@
 <script src="https://accounts.google.com/gsi/client" async></script>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
+
+/* Channel library styles */
+.channel-library {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.channel-add-form {
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.channel-add-form-title {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent2);
+  margin-bottom: 2px;
+}
+.channel-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+.channel-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 8px 10px;
+  transition: border-color .15s;
+}
+.channel-item:hover { border-color: var(--border2); }
+.channel-item-emoji {
+  font-size: 15px;
+  flex-shrink: 0;
+  width: 20px;
+  text-align: center;
+}
+.channel-item-info {
+  flex: 1;
+  min-width: 0;
+}
+.channel-item-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.channel-item-url {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.channel-item-actions {
+  display: flex;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.channel-del-btn {
+  background: rgba(255,71,87,.1);
+  border: 1px solid rgba(255,71,87,.25);
+  color: var(--red);
+  border-radius: 5px;
+  padding: 3px 8px;
+  font-size: 9px;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  cursor: pointer;
+}
+.channel-edit-btn {
+  background: rgba(168,85,247,.1);
+  border: 1px solid rgba(168,85,247,.25);
+  color: var(--purple);
+  border-radius: 5px;
+  padding: 3px 8px;
+  font-size: 9px;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  cursor: pointer;
+}
+.channel-empty {
+  font-size: 11px;
+  color: var(--muted);
+  font-style: italic;
+  text-align: center;
+  padding: 16px 0;
+}
+.channel-mapping-note {
+  font-size: 9px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+  
 :root {
   --bg: #070809;
   --s1: #0e1015;
@@ -752,7 +860,45 @@ select option { background: #141720; }
         </div>
       </div>
     </div>
+<div class="divider"></div>
 
+<div class="sidebar-section">
+  <div class="section-label">📺 Channel Library</div>
+  <div class="channel-library">
+    <div class="channel-add-form" id="channel-add-form">
+      <div class="channel-add-form-title" id="channel-form-title">➕ Add New Channel</div>
+      <input type="hidden" id="channel-edit-id" value=""/>
+      <div class="input-group">
+        <label class="input-label">Channel Name</label>
+        <input type="text" id="ch-name" placeholder="e.g. TNT Sport 1" maxlength="60"/>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Stream URL <span class="badge-tip">mora= value</span></label>
+        <input type="text" id="ch-url" placeholder="https://tv.sportsnews.id/p/tnt1.html"/>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Emoji <span style="color:var(--muted);font-weight:400;font-size:10px;">(optional)</span></label>
+        <input type="text" id="ch-emoji" placeholder="📺" maxlength="4" style="width:72px;"/>
+      </div>
+      <div class="settings-note channel-mapping-note" style="margin-top:4px;">
+        <strong style="color:var(--accent2);">⚡ Fully automatic.</strong>
+        Just enter the channel name exactly as it appears (e.g. <code style="color:var(--accent);">TNT Sport 1</code>). The system matches channels to events automatically.
+      </div>
+      <div style="display:flex;gap:6px;margin-top:6px;">
+        <button class="btn btn-cyan btn-full" onclick="saveChannel()">
+          <span class="btn-text" id="ch-save-btn-text">💾 Save Channel</span>
+        </button>
+        <button class="btn btn-secondary" id="ch-cancel-btn" onclick="cancelChannelEdit()" style="display:none;padding:10px 12px;">
+          <span class="btn-text">✕</span>
+        </button>
+      </div>
+    </div>
+    <div id="channel-list-wrap">
+      <div class="channel-empty" id="channel-empty-msg">No channels saved yet. Add one above.</div>
+      <div class="channel-list" id="channel-list"></div>
+    </div>
+  </div>
+</div>
     <div class="divider"></div>
 
     <!-- LEAGUES -->
@@ -1770,6 +1916,177 @@ function toast(msg, type) {
 // ─── UTILS ─────────────────────────────────────────────────────────────────
 function escHtml(s) {
   return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+  // ========== CHANNEL LIBRARY ==========
+let channelLibrary = [];
+let tempChannelRegistry = {};
+let cardChannels = {};
+
+// Generate unique ID
+function genChannelId() {
+  return 'ch-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,6);
+}
+
+// Load channels from localStorage
+function loadChannelLibraryFromStorage() {
+  try {
+    const raw = localStorage.getItem('s803_channels_v1');
+    if (raw) channelLibrary = JSON.parse(raw);
+    else channelLibrary = []; // default empty
+  } catch(e) { channelLibrary = []; }
+  renderChannelList();
+}
+
+// Save channels to localStorage
+function saveChannelLibraryToStorage() {
+  localStorage.setItem('s803_channels_v1', JSON.stringify(channelLibrary));
+}
+
+// Save a channel (add or edit)
+function saveChannel() {
+  const name   = document.getElementById('ch-name').value.trim();
+  const url    = document.getElementById('ch-url').value.trim();
+  const emoji  = document.getElementById('ch-emoji').value.trim() || '📺';
+  const editId = document.getElementById('channel-edit-id').value.trim();
+  if (!name) { toast('Enter a channel name', 'err'); return; }
+  if (!url)  { toast('Enter a stream URL', 'err'); return; }
+  // Clean URL: if it's already a full player URL, extract the mora value
+  let stripped = url;
+  if (stripped.includes('mora=')) {
+    const moraPart = stripped.split('mora=')[1];
+    if (moraPart) stripped = decodeURIComponent(moraPart.split('&mora=')[0]);
+  }
+  if (editId) {
+    const idx = channelLibrary.findIndex(c => c.id === editId);
+    if (idx !== -1) {
+      channelLibrary[idx] = { id: editId, name, emoji, url: stripped };
+      toast(`✓ Channel updated: ${name}`, 'ok');
+      log('ok', `✓ Channel updated: ${name}`);
+    }
+  } else {
+    channelLibrary.push({ id: genChannelId(), name, emoji, url: stripped });
+    toast(`✓ Channel saved: ${name}`, 'ok');
+    log('ok', `✓ Channel saved: ${name}`);
+  }
+  saveChannelLibraryToStorage();
+  resetChannelForm();
+  renderChannelList();
+}
+
+function resetChannelForm() {
+  document.getElementById('ch-name').value = '';
+  document.getElementById('ch-url').value = '';
+  document.getElementById('ch-emoji').value = '';
+  document.getElementById('channel-edit-id').value = '';
+  document.getElementById('channel-form-title').textContent = '➕ Add New Channel';
+  document.getElementById('ch-save-btn-text').textContent = '💾 Save Channel';
+  document.getElementById('ch-cancel-btn').style.display = 'none';
+}
+
+function cancelChannelEdit() { resetChannelForm(); }
+
+function editChannel(id) {
+  const ch = channelLibrary.find(c => c.id === id);
+  if (!ch) return;
+  document.getElementById('ch-name').value = ch.name;
+  document.getElementById('ch-url').value = ch.url;
+  document.getElementById('ch-emoji').value = ch.emoji || '📺';
+  document.getElementById('channel-edit-id').value = ch.id;
+  document.getElementById('channel-form-title').textContent = `✏️ Editing: ${ch.name}`;
+  document.getElementById('ch-save-btn-text').textContent = '✅ Update Channel';
+  document.getElementById('ch-cancel-btn').style.display = 'flex';
+  document.getElementById('channel-add-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function deleteChannel(id) {
+  const ch = channelLibrary.find(c => c.id === id);
+  if (!ch) return;
+  if (!confirm(`Delete channel “${ch.name}”?`)) return;
+  channelLibrary = channelLibrary.filter(c => c.id !== id);
+  saveChannelLibraryToStorage();
+  renderChannelList();
+  toast('Channel deleted', 'ok');
+  log('ok', `🗑 Channel deleted: ${ch.name}`);
+}
+
+function renderChannelList() {
+  const list = document.getElementById('channel-list');
+  const emptyMsg = document.getElementById('channel-empty-msg');
+  if (!list) return;
+  if (!channelLibrary.length) {
+    list.innerHTML = '';
+    if (emptyMsg) emptyMsg.style.display = 'block';
+    return;
+  }
+  if (emptyMsg) emptyMsg.style.display = 'none';
+  list.innerHTML = channelLibrary.map(ch => `
+    <div class="channel-item">
+      <div class="channel-item-emoji">${escHtml(ch.emoji || '📺')}</div>
+      <div class="channel-item-info">
+        <div class="channel-item-name">${escHtml(ch.name)}</div>
+        <div class="channel-item-url">${escHtml(ch.url)}</div>
+      </div>
+      <div class="channel-item-actions">
+        <button class="channel-edit-btn" onclick="editChannel('${ch.id}')">✏️</button>
+        <button class="channel-del-btn" onclick="deleteChannel('${ch.id}')">🗑</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ========== CHANNEL MATCHING AND IFRAME BUILDER ==========
+// Build iframe URL from selected channel IDs
+function buildIframeUrl(channelIds) {
+  if (!channelIds || channelIds.length === 0) return '';
+  const params = channelIds.map(cid => {
+    const ch = channelLibrary.find(c => c.id === cid) || tempChannelRegistry[cid] || null;
+    return ch ? `mora=${encodeURIComponent(ch.url)}` : null;
+  }).filter(Boolean);
+  if (!params.length) return '';
+  const PLAYER_BASE = 'https://soulmap1.blogspot.com/p/media-player.html';
+  return PLAYER_BASE + '?' + params.join('&');
+}
+
+// Auto‑match channels for a given event based on league and team names
+function getAutoMatchedChannelIds(idx) {
+  const gd = detectedGames[idx];
+  if (!gd || !channelLibrary.length) return [];
+  const c = getCompetitors(gd);
+  const homeName = ((c.home.team && c.home.team.displayName) || '').toLowerCase();
+  const awayName = ((c.away.team && c.away.team.displayName) || '').toLowerCase();
+  const leagueName = (gd.league.name || '').toLowerCase();
+  const leagueLabel = (gd.league.label || '').toLowerCase();
+  const haystack = [leagueName, leagueLabel, homeName, awayName].join(' ');
+  const matched = [];
+  channelLibrary.forEach(ch => {
+    const nameLower = (ch.name || '').toLowerCase();
+    // Simple keyword matching: if channel name appears in haystack
+    if (haystack.includes(nameLower)) {
+      matched.push(ch.id);
+    } else {
+      // Split into words and check if any word length > 2 is in haystack
+      const words = nameLower.split(/[\s-_]+/).filter(w => w.length > 2);
+      if (words.some(w => haystack.includes(w))) {
+        matched.push(ch.id);
+      }
+    }
+  });
+  return matched;
+}
+
+// Apply default channels to a newly detected game
+function applyDefaultChannels(idx) {
+  const gd = detectedGames[idx];
+  if (!gd || !channelLibrary.length) return;
+  const matchedIds = getAutoMatchedChannelIds(idx);
+  if (matchedIds.length) {
+    if (!cardChannels[idx]) cardChannels[idx] = new Set();
+    matchedIds.forEach(cid => cardChannels[idx].add(cid));
+    const url = buildIframeUrl(Array.from(cardChannels[idx]));
+    if (url) gd.iframeSrc = url;
+    const names = matchedIds.map(cid => channelLibrary.find(c => c.id === cid)?.name || cid).join(', ');
+    log('ai', `⚡ Intelligence match for ${getMatchTitle(gd)}: ${names}`);
+  }
 }
 </script>
 
