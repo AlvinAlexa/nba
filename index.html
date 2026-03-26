@@ -2868,6 +2868,464 @@ if (typeof renderGames === 'function') {
 }
 
 console.log('✅ Insert Thumb button added to event cards');
+  // ========== COMPLETE THUMBNAIL INTEGRATION ==========
+// Includes: auto-generation, logo fetching, insert button, copy button
+
+// ------------------------------------------------------------
+// 1. Helper: rewrite ESPN logo to high-res (500px PNG)
+function rewriteESPNLogo(url) {
+  if (!url) return '';
+  const espnDomains = ['a.espncdn.com', 'a1.espncdn.com', 'a2.espncdn.com', 'a3.espncdn.com', 'a4.espncdn.com'];
+  const isESPN = espnDomains.some(d => url.includes(d));
+  if (!isESPN) return url;
+  return url
+    .replace(/\/\d{2,4}\.png(\?.*)?$/, '/500.png')
+    .replace(/\/\d{2,4}\.jpg(\?.*)?$/, '/500.png')
+    .replace(/&w=\d+&h=\d+/, '&w=500&h=500');
+}
+
+// ------------------------------------------------------------
+// 2. Logo fetching (ESPN + TheSportsDB)
+const tsdbCache = {};
+async function fetchTSDBLogo(teamName) {
+  if (!teamName) return null;
+  const key = teamName.toLowerCase().trim();
+  if (tsdbCache[key] !== undefined) return tsdbCache[key];
+  try {
+    const res = await fetch(`https://www.thesportsdb.com/api/v1/json/3/searchteams.php?t=${encodeURIComponent(teamName)}`);
+    const data = await res.json();
+    const logo = data.teams?.[0]?.strTeamBadge || data.teams?.[0]?.strBadge || null;
+    tsdbCache[key] = logo;
+    return logo;
+  } catch(e) {
+    tsdbCache[key] = null;
+    return null;
+  }
+}
+
+async function getBestTeamLogo(teamName, espnLogo) {
+  if (!teamName || teamName === '?' || teamName === 'Live Event') return null;
+  if (espnLogo) {
+    const highRes = rewriteESPNLogo(espnLogo);
+    // Optionally, we could test the URL, but assume it's valid.
+    return highRes;
+  }
+  return await fetchTSDBLogo(teamName);
+}
+
+// ------------------------------------------------------------
+// 3. Drawing functions (simplified from v5.5, but fully functional)
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function drawS803Badge(ctx, W, H, scale) {
+  const pad = Math.round(12 * scale);
+  const bw = Math.round(130 * scale);
+  const bh = Math.round(32 * scale);
+  const x = W - bw - pad;
+  const y = pad;
+  ctx.save();
+  ctx.globalAlpha = 0.95;
+  ctx.fillStyle = 'rgba(0,0,0,.85)';
+  roundRect(ctx, x, y, bw, bh, 5);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#e63946';
+  ctx.beginPath();
+  ctx.arc(x + 11 * scale, y + bh / 2, 4 * scale, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = `900 ${Math.round(13 * scale)}px "Barlow Condensed",sans-serif`;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('SPORTS', x + 19 * scale, y + bh / 2);
+  ctx.fillStyle = '#39ff14';
+  ctx.fillText(' 803', x + 19 * scale + ctx.measureText('SPORTS').width, y + bh / 2);
+  ctx.restore();
+}
+
+async function loadImgForCanvas(url, fallbackName) {
+  if (!url) return null;
+  const tryLoad = (src) => new Promise(resolve => {
+    if (!src) return resolve(null);
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    const t = setTimeout(() => resolve(null), 6000);
+    img.onload = () => { clearTimeout(t); resolve(img); };
+    img.onerror = () => { clearTimeout(t); resolve(null); };
+    img.src = src;
+  });
+  let img = await tryLoad(url);
+  if (!img && url.startsWith('http')) {
+    const proxy = `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=300&h=300&fit=contain&n=-1`;
+    img = await tryLoad(proxy);
+  }
+  if (!img && fallbackName) {
+    const tsdbUrl = await fetchTSDBLogo(fallbackName);
+    if (tsdbUrl) {
+      img = await tryLoad(tsdbUrl);
+      if (!img) img = await tryLoad(`https://wsrv.nl/?url=${encodeURIComponent(tsdbUrl)}&w=300&h=300&fit=contain&n=-1`);
+    }
+  }
+  return img;
+}
+
+async function drawMatchThumb(canvas, opts) {
+  const { home, away, hLogo, aLogo, league, datetime, bg1, bg2 } = opts;
+  const W = canvas.width, H = canvas.height, cx = W / 2, cy = H / 2, scale = W / 800;
+  const ctx = canvas.getContext('2d');
+  const [hImg, aImg] = await Promise.all([
+    loadImgForCanvas(hLogo, home),
+    loadImgForCanvas(aLogo, away)
+  ]);
+
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.fillStyle = bg1;
+  ctx.fillRect(0, 0, cx + 8 * scale, H);
+  ctx.fillStyle = bg2;
+  ctx.fillRect(cx - 8 * scale, 0, W, H);
+
+  const blendG = ctx.createLinearGradient(cx - 60 * scale, 0, cx + 60 * scale, 0);
+  blendG.addColorStop(0, bg1);
+  blendG.addColorStop(0.5, 'rgba(0,0,0,0.6)');
+  blendG.addColorStop(1, bg2);
+  ctx.fillStyle = blendG;
+  ctx.fillRect(cx - 60 * scale, 0, 120 * scale, H);
+
+  const vig = ctx.createRadialGradient(cx, cy, H * 0.05, cx, cy, H * 0.9);
+  vig.addColorStop(0, 'rgba(0,0,0,0)');
+  vig.addColorStop(1, 'rgba(0,0,0,0.6)');
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, W, H);
+
+  if (league) {
+    const lgFs = Math.round(13 * scale);
+    ctx.font = `700 ${lgFs}px "Barlow Condensed",sans-serif`;
+    const lgW = ctx.measureText(league).width + 24 * scale;
+    const lgH = lgFs + 14 * scale;
+    ctx.save();
+    ctx.globalAlpha = 0.9;
+    ctx.fillStyle = '#080c14';
+    roundRect(ctx, cx - lgW / 2, Math.round(16 * scale), lgW, lgH, lgH / 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#e2e8f0';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(league, cx, 16 * scale + lgH / 2);
+    ctx.restore();
+  }
+
+  const cR = Math.round(105 * scale);
+  const hCx = Math.round(W * 0.255);
+  const aCx = Math.round(W * 0.745);
+  const crestCy = Math.round(H * 0.42);
+
+  function drawLogoCircle(img, cx, cy, r) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, r + 3 * scale, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+    ctx.lineWidth = 2 * scale;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    ctx.fill();
+    ctx.clip();
+    if (img) {
+      ctx.shadowColor = 'rgba(255,255,255,0.15)';
+      ctx.shadowBlur = 10 * scale;
+      ctx.drawImage(img, cx - r * 0.85, cy - r * 0.85, r * 1.7, r * 1.7);
+    } else {
+      ctx.fillStyle = 'rgba(255,255,255,0.08)';
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+  drawLogoCircle(hImg, hCx, crestCy, cR);
+  drawLogoCircle(aImg, aCx, crestCy, cR);
+
+  const vsR = Math.round(28 * scale);
+  ctx.save();
+  ctx.shadowColor = '#e63946';
+  ctx.shadowBlur = 24 * scale;
+  ctx.fillStyle = '#e63946';
+  ctx.beginPath();
+  ctx.arc(cx, crestCy, vsR, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#fff';
+  ctx.font = `900 ${Math.round(15 * scale)}px "Barlow Condensed",sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('VS', cx, crestCy);
+  ctx.restore();
+
+  const nameY = crestCy + cR + Math.round(18 * scale);
+  const nameFs = Math.round(21 * scale);
+  ctx.font = `800 ${nameFs}px "Barlow Condensed",sans-serif`;
+  ctx.shadowColor = 'rgba(0,0,0,0.95)';
+  ctx.shadowBlur = 12 * scale;
+  ctx.fillStyle = '#fff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  function wrapText(text, cx, y, maxW) {
+    if (!text) return;
+    const words = text.split(' ');
+    let line = '', lines = [];
+    for (const w of words) {
+      const t = line ? line + ' ' + w : w;
+      if (ctx.measureText(t).width > maxW && line) { lines.push(line); line = w; }
+      else line = t;
+    }
+    lines.push(line);
+    lines.slice(0, 2).forEach((l, i) => ctx.fillText(l, cx, y + i * (nameFs + 4)));
+  }
+  wrapText(home, hCx, nameY, W * 0.38);
+  wrapText(away, aCx, nameY, W * 0.38);
+  ctx.shadowBlur = 0;
+
+  if (datetime) {
+    const dtFs = Math.round(13 * scale);
+    ctx.font = `600 ${dtFs}px "Barlow Condensed",sans-serif`;
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.shadowColor = 'rgba(0,0,0,0.9)';
+    ctx.shadowBlur = 8;
+    ctx.fillText('🕐  ' + datetime, cx, H - Math.round(16 * scale));
+    ctx.shadowBlur = 0;
+  }
+
+  ctx.save();
+  ctx.globalAlpha = 0.92;
+  const stripe = ctx.createLinearGradient(0, H - Math.round(36 * scale), W, H);
+  stripe.addColorStop(0, '#e63946');
+  stripe.addColorStop(1, '#c1121f');
+  ctx.fillStyle = stripe;
+  ctx.fillRect(0, H - Math.round(36 * scale), W, Math.round(36 * scale));
+  ctx.restore();
+  ctx.font = `800 ${Math.round(13 * scale)}px "Barlow Condensed",sans-serif`;
+  ctx.fillStyle = '#fff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('▶  WATCH FREE ON SPORTS 803', cx, H - Math.round(18 * scale));
+
+  drawS803Badge(ctx, W, H, scale);
+}
+
+// ------------------------------------------------------------
+// 4. Generate thumbnail for a game (auto-called on scan)
+async function generateEventThumbnail(gd) {
+  const canvas = document.createElement('canvas');
+  const W = 800, H = 450;
+  canvas.width = W;
+  canvas.height = H;
+
+  const c = getCompetitors(gd);
+  const homeName = (c.home.team && c.home.team.displayName) || '?';
+  const awayName = (c.away.team && c.away.team.displayName) || '?';
+  const homeEspnLogo = (c.home.team && c.home.team.logo) || '';
+  const awayEspnLogo = (c.away.team && c.away.team.logo) || '';
+
+  let hLogo = await getBestTeamLogo(homeName, homeEspnLogo);
+  let aLogo = await getBestTeamLogo(awayName, awayEspnLogo);
+
+  let datetime = '';
+  if (gd.espnEvent.date) {
+    const d = new Date(gd.espnEvent.date);
+    datetime = d.toLocaleString(undefined, { weekday:'short', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+  }
+
+  const isRace = (!awayName || awayName === '?' || awayName === 'Live Event') &&
+                 (gd.league.name === 'Formula 1' || gd.league.name === 'MotoGP' || gd.league.name === 'IndyCar' || gd.league.name === 'NASCAR');
+
+  if (isRace) {
+    // For races, we'd use a dedicated drawRaceThumb, but we can fallback to match draw with placeholder
+    // For simplicity, we'll use match draw with a generic race name
+    await drawMatchThumb(canvas, {
+      home: homeName,
+      away: 'Race',
+      hLogo: hLogo,
+      aLogo: null,
+      league: gd.league.name,
+      datetime: datetime,
+      bg1: '#0a0e1a',
+      bg2: '#1a0a00'
+    });
+  } else {
+    await drawMatchThumb(canvas, {
+      home: homeName,
+      away: awayName,
+      hLogo: hLogo,
+      aLogo: aLogo,
+      league: gd.league.name,
+      datetime: datetime,
+      bg1: '#0d1b2a',
+      bg2: '#1a0020'
+    });
+  }
+
+  return canvas.toDataURL('image/jpeg', 0.85);
+}
+
+// ------------------------------------------------------------
+// 5. Override generatePreviewContent to auto-generate thumbnail
+if (typeof generatePreviewContent === 'function') {
+  const originalGeneratePreviewContent = generatePreviewContent;
+  window.generatePreviewContent = async function(idx) {
+    const gd = detectedGames[idx];
+    if (gd) {
+      try {
+        const thumb = await generateEventThumbnail(gd);
+        gd.thumbUrl = thumb;
+      } catch(e) {
+        console.warn('Thumbnail generation failed:', e);
+      }
+    }
+    await originalGeneratePreviewContent(idx);
+    // After original content, update the thumb panel if visible
+    const thumbPanel = document.getElementById(`text-thumbnail-${idx}`);
+    if (thumbPanel && gd?.thumbUrl) {
+      const panelHtml = `<div class="thumb-panel">
+        <div class="thumb-preview-wrap"><img class="thumb-preview-img" src="${gd.thumbUrl}" alt="Thumbnail" onclick="openLightbox(this.src)"></div>
+        <div class="thumb-actions">
+          <button class="btn btn-secondary" onclick="regenThumbnail(${idx})"><span class="btn-text">🔄 Regen</span><div class="spin"></div></button>
+          <a class="btn btn-secondary" href="${gd.thumbUrl}" download="sports803-thumb-${idx}.jpg"><span class="btn-text">⬇ Download</span></a>
+          <button class="btn btn-secondary copy-thumb-btn" onclick="copyThumbnailFromCard(${idx})"><span class="btn-text">📋 Copy URL</span></button>
+        </div>
+      </div>`;
+      thumbPanel.innerHTML = panelHtml;
+    }
+  };
+}
+
+// ------------------------------------------------------------
+// 6. Copy URL function for the thumb tab button
+window.copyThumbnailFromCard = function(idx) {
+  const gd = detectedGames?.[idx];
+  if (!gd || !gd.thumbUrl) {
+    toast('No thumbnail generated yet', 'err');
+    return;
+  }
+  navigator.clipboard.writeText(gd.thumbUrl).then(() => {
+    toast('Thumbnail URL copied to clipboard', 'ok');
+  }).catch(() => {
+    const textarea = document.createElement('textarea');
+    textarea.value = gd.thumbUrl;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    toast('Thumbnail URL copied to clipboard', 'ok');
+  });
+};
+
+// ------------------------------------------------------------
+// 7. Insert thumbnail into post body (for the action bar button)
+function insertThumbnailIntoPostFromCard(idx) {
+  const gd = detectedGames?.[idx];
+  if (!gd || !gd.thumbUrl) {
+    toast('No thumbnail generated for this event yet.', 'err');
+    return;
+  }
+
+  const title = gd.espnEvent?.name || `${gd.home?.name || 'Event'} vs ${gd.away?.name || ''}`;
+  const imgHtml = `<div><img src="${gd.thumbUrl}" alt="${title}" style="max-width:100%;height:auto;border-radius:8px;margin-bottom:16px"></div>\n`;
+
+  const postBody = document.getElementById('post-body');
+  if (postBody) {
+    postBody.value = imgHtml + postBody.value;
+    toast('Thumbnail inserted at top of post', 'ok');
+    if (typeof updateSEOMeter === 'function') updateSEOMeter();
+  } else {
+    navigator.clipboard.writeText(gd.thumbUrl).then(() => {
+      toast('No post editor found. URL copied to clipboard.', 'ok');
+    }).catch(() => {
+      const textarea = document.createElement('textarea');
+      textarea.value = gd.thumbUrl;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      toast('No post editor found. URL copied to clipboard.', 'ok');
+    });
+  }
+}
+
+// ------------------------------------------------------------
+// 8. Add "Insert Thumb" button to each card's action bar
+if (typeof renderGames === 'function') {
+  const originalRenderGames = renderGames;
+  window.renderGames = function() {
+    originalRenderGames();
+
+    for (let i = 0; i < (detectedGames?.length || 0); i++) {
+      const actionsDiv = document.querySelector(`#card-${i} .content-actions`);
+      if (!actionsDiv) continue;
+      if (actionsDiv.querySelector('.insert-thumb-btn')) continue;
+
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-secondary insert-thumb-btn';
+      btn.innerHTML = '<span class="btn-text">🖼️ Insert Thumb</span><div class="spin"></div>';
+      btn.onclick = () => insertThumbnailIntoPostFromCard(i);
+
+      const postBtn = actionsDiv.querySelector('.btn-primary');
+      if (postBtn) actionsDiv.insertBefore(btn, postBtn);
+      else actionsDiv.appendChild(btn);
+    }
+  };
+}
+
+// ------------------------------------------------------------
+// 9. Ensure the "Regen" button also uses enhanced logo fetching
+if (typeof regenThumbnail === 'function') {
+  const originalRegenThumbnail = regenThumbnail;
+  window.regenThumbnail = async function(idx) {
+    const gd = detectedGames[idx];
+    if (!gd) return;
+    try {
+      const thumb = await generateEventThumbnail(gd);
+      gd.thumbUrl = thumb;
+      // Update the thumb panel directly
+      const thumbPanel = document.getElementById(`text-thumbnail-${idx}`);
+      if (thumbPanel) {
+        const panelHtml = `<div class="thumb-panel">
+          <div class="thumb-preview-wrap"><img class="thumb-preview-img" src="${thumb}" alt="Thumbnail" onclick="openLightbox(this.src)"></div>
+          <div class="thumb-actions">
+            <button class="btn btn-secondary" onclick="regenThumbnail(${idx})"><span class="btn-text">🔄 Regen</span><div class="spin"></div></button>
+            <a class="btn btn-secondary" href="${thumb}" download="sports803-thumb-${idx}.jpg"><span class="btn-text">⬇ Download</span></a>
+            <button class="btn btn-secondary copy-thumb-btn" onclick="copyThumbnailFromCard(${idx})"><span class="btn-text">📋 Copy URL</span></button>
+          </div>
+        </div>`;
+        thumbPanel.innerHTML = panelHtml;
+      }
+      // Also update any other UI elements that might show the thumbnail
+      toast('Thumbnail regenerated', 'ok');
+    } catch(e) {
+      toast('Failed to regenerate thumbnail: ' + e.message, 'err');
+    }
+  };
+}
+
+// ------------------------------------------------------------
+// 10. Add a "Copy URL" button inside the thumb tab (if missing)
+// The thumb tab already gets a button from the override above, but ensure it's there.
+
+console.log('✅ Complete thumbnail integration active');
 </script>
 
 </body>
